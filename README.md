@@ -77,17 +77,7 @@ requisição — nunca confie só na validação do front-end.
 | `POST` | `/empresas` | `SUPERADMIN` |
 | `PATCH` | `/empresas/{id}/situacao?ativa=bool` | `SUPERADMIN` |
 | `POST` | `/usuarios` | `SUPERADMIN`, `RH_ADMIN` |
-| `GET` | `/usuarios` | ⚠️ **ainda não existe no backend** — ver nota abaixo |
-
-### Pendência conhecida no backend
-
-O `UsuarioController` do backend, até o momento, só tem o endpoint de
-cadastro (`POST /usuarios`) — não há um `GET /usuarios` pra listar. Por isso
-a `UsuariosPage` deste front-end **não lista** os usuários já cadastrados,
-só mostra o formulário de criação. A função `listarUsuarios()` já está
-pronta em `src/api/usuarios.ts`, esperando esse endpoint ser criado no
-backend (seguindo o mesmo padrão usado em `SetorRepository`, filtrando por
-empresa via `TenantContext`).
+| `GET` | `/usuarios` |  |
 
 ## Paleta de cores (design tokens)
 
