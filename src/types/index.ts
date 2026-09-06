@@ -1,10 +1,10 @@
 // Espelha o enum Perfil.java do backend
 export type Perfil =
-  | 'SUPERADMIN'
-  | 'RH_ADMIN'
-  | 'GESTOR'
-  | 'FUNCIONARIO'
-  | 'USUARIO_SETOR';
+    | 'SUPERADMIN'
+    | 'RH_ADMIN'
+    | 'GESTOR'
+    | 'FUNCIONARIO'
+    | 'USUARIO_SETOR';
 
 // Espelha LoginRequestDTO.java
 export interface LoginRequest {
@@ -60,6 +60,38 @@ export interface ApiError {
   timestamp: string;
   fields?: Record<string, string> | null;
 }
+
+export type PoliticaForaPerimetro = 'BLOQUEAR' | 'PENDENTE_ANALISE';
+
+export interface Setor {
+  id: string;
+  nome: string;
+  endereco: string;
+  latitude: number;
+  longitude: number;
+  raioMetros: number;
+  exigirSelfie: boolean;
+  politicaForaPerimetro: PoliticaForaPerimetro;
+  ignorarLocalizacao: boolean;
+  empresa: Empresa;
+}
+
+export interface SetorRequest {
+  nome: string;
+  endereco: string;
+  latitude: number;
+  longitude: number;
+  raioMetros: number;
+  exigirSelfie: boolean;
+  politicaForaPerimetro: PoliticaForaPerimetro;
+  ignorarLocalizacao: boolean;
+  empresaId?: string;
+}
+
+export const POLITICA_FORA_PERIMETRO_LABELS: Record<PoliticaForaPerimetro, string> = {
+  BLOQUEAR: 'Bloquear a marcação',
+  PENDENTE_ANALISE: 'Aceitar como pendente de análise',
+};
 
 export const PERFIL_LABELS: Record<Perfil, string> = {
   SUPERADMIN: 'Superadministrador',
