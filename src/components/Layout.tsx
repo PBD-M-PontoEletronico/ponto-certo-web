@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { PERFIL_LABELS } from '../types';
+import { ThemeToggle } from './ThemeToggle'; // ajuste o caminho relativo se estiver em outra pasta
 
 const linkBase =
     'block rounded-sm px-3 py-2 text-sm font-medium transition-colors';
@@ -67,6 +68,19 @@ export function Layout() {
                   Setores
                 </NavLink>
             )}
+
+            {(usuario.perfil === 'SUPERADMIN' ||
+                usuario.perfil === 'RH_ADMIN') && (
+                <NavLink
+                    to="/alocacoes"
+                    className={({ isActive }) =>
+                        `${linkBase} ${isActive ? linkAtivo : linkInativo}`
+                    }
+                >
+                  Alocações
+                </NavLink>
+            )}
+              
           </nav>
 
           <div className="border-t border-border pt-4">
