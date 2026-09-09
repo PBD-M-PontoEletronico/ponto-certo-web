@@ -26,10 +26,12 @@ export function UsuariosPage() {
   const [senha, setSenha] = useState('');
   const [perfil, setPerfil] = useState<Perfil>('FUNCIONARIO');
   const [empresaId, setEmpresaId] = useState('');
+  const [matricula, setMatricula] = useState(''); // NOVO
+  const [cargo, setCargo] = useState('');         // NOVO
+
+  const ehFuncionario = perfil === 'FUNCIONARIO'; // NOVO
 
   useEffect(() => {
-    // O SUPERADMIN precisa escolher pra qual empresa cadastrar o usuário.
-    // O RH_ADMIN não — o backend já resolve isso via TenantContext.
     if (ehSuperAdmin) {
       empresasApi.listarEmpresas().then(setEmpresas).catch(() => {});
     }
@@ -48,6 +50,8 @@ export function UsuariosPage() {
         senha,
         perfil,
         empresaId: ehSuperAdmin ? empresaId : undefined,
+        matricula: ehFuncionario ? matricula : undefined, // NOVO
+        cargo: ehFuncionario ? cargo : undefined,          // NOVO
       });
 
       setSucesso(`Usuário "${nome}" cadastrado com sucesso.`);
@@ -56,6 +60,8 @@ export function UsuariosPage() {
       setSenha('');
       setPerfil('FUNCIONARIO');
       setEmpresaId('');
+      setMatricula(''); // NOVO
+      setCargo('');      // NOVO
     } catch (err) {
       setErro(extrairErro(err).message);
     } finally {
@@ -159,6 +165,33 @@ export function UsuariosPage() {
             </div>
           )}
         </div>
+
+        {/* NOVO: só aparece quando o perfil selecionado é FUNCIONARIO */}
+        {ehFuncionario && (
+          <div className="mb-4 grid grid-cols-2 gap-4 rounded-sm border border-border bg-canvas/50 p-3">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-ink">
+                Matrícula
+              </label>
+              <input
+                value={matricula}
+                onChange={(e) => setMatricula(e.target.value)}
+                required
+                className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-ink">
+                Cargo
+              </label>
+              <input
+                value={cargo}
+                onChange={(e) => setCargo(e.target.value)}
+                className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
+              />
+            </div>
+          </div>
+        )}
 
         {erro && (
           <p className="mb-4 rounded-sm bg-danger/10 px-3 py-2 text-sm text-danger">

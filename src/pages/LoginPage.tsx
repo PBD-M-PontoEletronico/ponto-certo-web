@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Navigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { extrairErro } from '../api/client';
+import { LoginNavbar } from '../components/LoginNav';
 
 export function LoginPage() {
   const { usuario, carregando, entrar } = useAuth();
@@ -26,68 +27,72 @@ export function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-canvas px-4">
-      <div className="w-full max-w-sm">
-        <div className="mb-8 text-center">
-          <p className="text-2xl font-semibold text-primary">MeuPonto</p>
-          <p className="mt-1 text-sm text-muted">
-            Entre com sua conta para continuar
-          </p>
-        </div>
+    <div className="min-h-screen bg-canvas dark:bg-ink">
+      <LoginNavbar />
 
-        <form
-          onSubmit={handleSubmit}
-          className="rounded-lg border border-border bg-surface p-6 shadow-sm"
-        >
-          <div className="mb-4">
-            <label
-              htmlFor="usuario"
-              className="mb-1.5 block text-sm font-medium text-ink"
-            >
-              Usuário
-            </label>
-            <input
-              id="usuario"
-              type="text"
-              value={usuarioInput}
-              onChange={(e) => setUsuarioInput(e.target.value)}
-              required
-              autoFocus
-              className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-primary"
-            />
-          </div>
-
-          <div className="mb-5">
-            <label
-              htmlFor="senha"
-              className="mb-1.5 block text-sm font-medium text-ink"
-            >
-              Senha
-            </label>
-            <input
-              id="senha"
-              type="password"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              required
-              className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-primary"
-            />
-          </div>
-
-          {erro && (
-            <p className="mb-4 rounded-sm bg-danger/10 px-3 py-2 text-sm text-danger">
-              {erro}
+      <div className="flex min-h-[calc(100vh-64px)] items-center justify-center px-4">
+        <div className="w-full max-w-sm">
+          <div className="mb-8 text-center">
+            <p className="text-2xl font-semibold text-primary dark:text-white">Login</p>
+            <p className="mt-1 text-sm text-muted dark:text-white/60">
+              Entre com sua conta para continuar
             </p>
-          )}
+          </div>
 
-          <button
-            type="submit"
-            disabled={carregando}
-            className="w-full rounded-sm bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
+          <form
+            onSubmit={handleSubmit}
+            className="rounded-lg border border-border bg-surface p-6 shadow-sm dark:border-white/10 dark:bg-white/5"
           >
-            {carregando ? 'Entrando...' : 'Entrar'}
-          </button>
-        </form>
+            <div className="mb-4">
+              <label
+                htmlFor="usuario"
+                className="mb-1.5 block text-sm font-medium text-ink dark:text-white"
+              >
+                Usuário
+              </label>
+              <input
+                id="usuario"
+                type="text"
+                value={usuarioInput}
+                onChange={(e) => setUsuarioInput(e.target.value)}
+                required
+                autoFocus
+                className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-primary dark:border-white/10 dark:bg-white/10 dark:text-white"
+              />
+            </div>
+
+            <div className="mb-5">
+              <label
+                htmlFor="senha"
+                className="mb-1.5 block text-sm font-medium text-ink dark:text-white"
+              >
+                Senha
+              </label>
+              <input
+                id="senha"
+                type="password"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                required
+                className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none transition-colors focus:border-primary dark:border-white/10 dark:bg-white/10 dark:text-white"
+              />
+            </div>
+
+            {erro && (
+              <p className="mb-4 rounded-sm bg-danger/10 px-3 py-2 text-sm text-danger">
+                {erro}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={carregando}
+              className="w-full rounded-sm bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
+            >
+              {carregando ? 'Entrando...' : 'Entrar'}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

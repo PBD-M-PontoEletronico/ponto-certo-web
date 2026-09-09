@@ -40,7 +40,9 @@ export interface Usuario {
   nome: string;
   usuario: string;
   perfil: Perfil;
-  empresa: Empresa | null;
+  empresaId: string | null; // era "empresa: Empresa | null"
+  matricula: string | null;
+  cargo: string | null;
 }
 
 // Espelha UsuarioRequestDTO.java
@@ -50,6 +52,8 @@ export interface UsuarioRequest {
   senha: string;
   perfil: Perfil;
   empresaId?: string;
+  matricula?: string; // NOVO — obrigatório quando perfil = FUNCIONARIO
+  cargo?: string;      // NOVO
 }
 
 // Espelha ErrorResponseDTO.java
@@ -86,6 +90,22 @@ export interface SetorRequest {
   politicaForaPerimetro: PoliticaForaPerimetro;
   ignorarLocalizacao: boolean;
   empresaId?: string;
+}
+
+export interface Alocacao {
+  id: string;
+  usuario: Usuario; 
+  setor: Setor;
+  dataInicio: string;
+  dataFim: string | null;
+}
+
+// Espelha AlocacaoRequestDTO.java
+export interface AlocacaoRequest {
+  usuarioId: string; 
+  setorId: string;
+  dataInicio: string;
+  dataFim?: string;
 }
 
 export const POLITICA_FORA_PERIMETRO_LABELS: Record<PoliticaForaPerimetro, string> = {

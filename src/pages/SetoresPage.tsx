@@ -1,10 +1,12 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import * as setoresApi from '../api/setores';
 import * as empresasApi from '../api/empresas';
+import * as alocacoesApi from '../api/alocacoes';
 import { extrairErro } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import {
     POLITICA_FORA_PERIMETRO_LABELS,
+    type Alocacao,
     type Empresa,
     type PoliticaForaPerimetro,
     type Setor,
@@ -33,6 +35,11 @@ export function SetoresPage() {
         useState<PoliticaForaPerimetro>('BLOQUEAR');
     const [ignorarLocalizacao, setIgnorarLocalizacao] = useState(false);
     const [empresaIdForm, setEmpresaIdForm] = useState('');
+
+    // NOVO: controla qual setor está com a lista de alocados expandida
+    const [setorExpandido, setSetorExpandido] = useState<string | null>(null);
+    const [alocadosNoSetor, setAlocadosNoSetor] = useState<Alocacao[]>([]);
+    const [carregandoAlocados, setCarregandoAlocados] = useState(false);
 
     useEffect(() => {
         if (ehSuperAdmin) {
@@ -116,6 +123,25 @@ export function SetoresPage() {
             await carregar();
         } catch (err) {
             setErro(extrairErro(err).message);
+        }
+    }
+
+    // NOVO: abre/fecha a lista de quem está alocado no setor
+    async function toggleVerAlocados(setorId: string) {
+        if (setorExpandido === setorId) {
+            setSetorExpandido(null);
+            return;
+        }
+
+        setSetorExpandido(setorId);
+        setCarregandoAlocados(true);
+        try {
+            const dados = await alocacoesApi.alocadosAtualmenteNoSetor(setorId);
+            setAlocadosNoSetor(dados);
+        } catch {
+            setAlocadosNoSetor([]);
+        } finally {
+            setCarregandoAlocados(false);
         }
     }
 
@@ -342,55 +368,109 @@ export function SetoresPage() {
                                 </thead>
                                 <tbody>
                                 {setores.map((setor) => (
-                                    <tr
-                                        key={setor.id}
-                                        className="border-b border-border last:border-0"
-                                    >
-                                        <td className="px-5 py-3 text-ink">{setor.nome}</td>
-                                        <td className="px-5 py-3 text-muted">
-                                            {setor.endereco}
-                                        </td>
-                                        <td className="px-5 py-3 text-muted">
-                                            {setor.ignorarLocalizacao
-                                                ? '—'
-                                                : `${setor.raioMetros} m`}
-                                        </td>
-                                        <td className="px-5 py-3">
-                        <span
-                            className={`rounded-sm px-2 py-0.5 text-xs font-medium ${
-                                setor.exigirSelfie
-                                    ? 'bg-success/10 text-success'
-                                    : 'bg-canvas text-muted'
-                            }`}
-                        >
-                          {setor.exigirSelfie ? 'Exige' : 'Não exige'}
-                        </span>
-                                        </td>
-                                        <td className="px-5 py-3 text-muted">
-                                            {POLITICA_FORA_PERIMETRO_LABELS[
-                                                setor.politicaForaPerimetro
-                                                ]}
-                                        </td>
-                                        <td className="px-5 py-3">
-                        <span
-                            className={`rounded-sm px-2 py-0.5 text-xs font-medium ${
-                                setor.ignorarLocalizacao
-                                    ? 'bg-accent/10 text-accent'
-                                    : 'bg-canvas text-muted'
-                            }`}
-                        >
-                          {setor.ignorarLocalizacao ? 'Ignorada' : 'Validada'}
-                        </span>
-                                        </td>
-                                        <td className="px-5 py-3 text-right">
-                                            <button
-                                                onClick={() => handleExcluir(setor)}
-                                                className="text-sm font-medium text-danger hover:underline"
-                                            >
-                                                Excluir
-                                            </button>
-                                        </td>
-                                    </tr>
+                                    <>
+                                        <tr
+                                            key={setor.id}
+                                            className="border-b border-border last:border-0"
+                                        >
+                                            <td className="px-5 py-3 text-ink">{setor.nome}</td>
+                                            <td className="px-5 py-3 text-muted">
+                                                {setor.endereco}
+                                            </td>
+                                            <td className="px-5 py-3 text-muted">
+                                                {setor.ignorarLocalizacao
+                                                    ? '—'
+                                                    : `${setor.raioMetros} m`}
+                                            </td>
+                                            <td className="px-5 py-3">
+                            <span
+                                className={`rounded-sm px-2 py-0.5 text-xs font-medium ${
+                                    setor.exigirSelfie
+                                        ? 'bg-success/10 text-success'
+                                        : 'bg-canvas text-muted'
+                                }`}
+                            >
+                              {setor.exigirSelfie ? 'Exige' : 'Não exige'}
+                            </span>
+                                            </td>
+                                            <td className="px-5 py-3 text-muted">
+                                                {POLITICA_FORA_PERIMETRO_LABELS[
+                                                    setor.politicaForaPerimetro
+                                                    ]}
+                                            </td>
+                                            <td className="px-5 py-3">
+                            <span
+                                className={`rounded-sm px-2 py-0.5 text-xs font-medium ${
+                                    setor.ignorarLocalizacao
+                                        ? 'bg-accent/10 text-accent'
+                                        : 'bg-canvas text-muted'
+                                }`}
+                            >
+                              {setor.ignorarLocalizacao ? 'Ignorada' : 'Validada'}
+                            </span>
+                                            </td>
+                                            <td className="px-5 py-3 text-right">
+                                                <div className="flex justify-end gap-3">
+                                                    {/* NOVO: botão de ver alocados */}
+                                                    <button
+                                                        onClick={() => toggleVerAlocados(setor.id)}
+                                                        className="text-sm font-medium text-primary hover:underline"
+                                                    >
+                                                        {setorExpandido === setor.id
+                                                            ? 'Ocultar'
+                                                            : 'Ver alocados'}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleExcluir(setor)}
+                                                        className="text-sm font-medium text-danger hover:underline"
+                                                    >
+                                                        Excluir
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+
+                                        {/* NOVO: linha expandida com quem está alocado hoje */}
+                                        {setorExpandido === setor.id && (
+                                            <tr key={`${setor.id}-alocados`}>
+                                                <td colSpan={7} className="bg-canvas px-5 py-4">
+                                                    <p className="mb-2 text-xs font-medium uppercase text-muted">
+                                                        Alocados hoje
+                                                    </p>
+                                                    {carregandoAlocados ? (
+                                                        <p className="text-sm text-muted">
+                                                            Carregando...
+                                                        </p>
+                                                    ) : alocadosNoSetor.length === 0 ? (
+                                                        <p className="text-sm text-muted">
+                                                            Ninguém alocado neste setor no momento.
+                                                        </p>
+                                                    ) : (
+                                                        <ul className="space-y-1">
+                                                            {alocadosNoSetor.map((a) => (
+                                                                <li
+                                                                    key={a.id}
+                                                                    className="text-sm text-ink"
+                                                                >
+                                                                    {a.usuario.nome}
+                                                                    {a.usuario.matricula && (
+                                                                        <span className="text-muted">
+                                      {' '}
+                                                                            ({a.usuario.matricula})
+                                    </span>
+                                                                    )}
+                                                                    <span className="text-muted">
+                                    {' '}
+                                                                        — desde {a.dataInicio}
+                                  </span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        )}
+                                    </>
                                 ))}
                                 </tbody>
                             </table>
