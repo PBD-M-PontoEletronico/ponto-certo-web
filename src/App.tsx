@@ -9,51 +9,60 @@ import { EmpresasPage } from './pages/EmpresasPage';
 import { UsuariosPage } from './pages/UsuariosPage';
 import { SetoresPage } from './pages/SetoresPage';
 import { AlocacoesPage } from './pages/AlocacoesPage';
+import { EscalasPage } from './pages/EscalasPage';
 
 export function App() {
-  return (
-    <ThemeProvider>
-      <BrowserRouter>
-        <AuthProvider>
-          <Routes>
-            <Route path="/login" element={<LoginPage />} />
+    return (
+        <ThemeProvider>
+            <BrowserRouter>
+                <AuthProvider>
+                    <Routes>
+                        <Route path="/login" element={<LoginPage />} />
 
-            <Route element={<ProtectedRoute />}>
-              <Route element={<Layout />}>
-                <Route path="/" element={<DashboardPage />} />
+                        <Route element={<ProtectedRoute />}>
+                            <Route element={<Layout />}>
+                                <Route path="/" element={<DashboardPage />} />
 
-                <Route element={<ProtectedRoute perfisPermitidos={['SUPERADMIN']} />}>
-                  <Route path="/empresas" element={<EmpresasPage />} />
-                </Route>
+                                <Route element={<ProtectedRoute perfisPermitidos={['SUPERADMIN']} />}>
+                                    <Route path="/empresas" element={<EmpresasPage />} />
+                                </Route>
 
-                <Route
-                    element={
-                      <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
-                    }
-                >
-                  <Route path="/usuarios" element={<UsuariosPage />} />
-                </Route>
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                    <Route path="/usuarios" element={<UsuariosPage />} />
+                                </Route>
 
-                <Route
-                    element={
-                      <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
-                    }
-                >
-                  <Route path="/setores" element={<SetoresPage />} />
-                </Route>
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                    <Route path="/setores" element={<SetoresPage />} />
+                                </Route>
 
-                <Route
-                    element={
-                      <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
-                    }
-                >
-                  <Route path="/alocacoes" element={<AlocacoesPage />} />
-                </Route>
-              </Route>
-            </Route>
-          </Routes>
-        </AuthProvider>
-      </BrowserRouter>
-    </ThemeProvider>
-  );
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                    <Route path="/alocacoes" element={<AlocacoesPage />} />
+                                </Route>
+
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                    <Route path="/escalas" element={<EscalasPage />} />
+                                </Route>
+                            </Route>
+                        </Route>
+                    </Routes>
+                </AuthProvider>
+            </BrowserRouter>
+        </ThemeProvider>
+    );
 }
