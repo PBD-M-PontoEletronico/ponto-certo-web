@@ -11,6 +11,7 @@ import { SetoresPage } from './pages/SetoresPage';
 import { AlocacoesPage } from './pages/AlocacoesPage';
 import { EscalasPage } from './pages/EscalasPage';
 import { NovoSetorPage } from './pages/NovoSetorPage';
+import { NotFoundPage } from './pages/NotFoundPage';
 
 export function App() {
     return (
@@ -62,6 +63,8 @@ export function App() {
                                 </Route>
                             </Route>
                         </Route>
+
+                        <Route path="*" element={<NotFoundPage />} />
                     </Routes>
                 </AuthProvider>
             </BrowserRouter>
