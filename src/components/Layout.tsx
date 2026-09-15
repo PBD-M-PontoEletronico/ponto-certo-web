@@ -17,7 +17,7 @@ export function Layout() {
         <div className="flex min-h-screen bg-canvas">
             <aside className="flex w-60 flex-col border-r border-border bg-surface px-4 py-6">
                 <div className="mb-8 px-2">
-                    <p className="text-lg font-semibold text-primary">MeuPonto</p>
+                    <p className="text-lg font-semibold text-primary">PontoCerto</p>
                     <p className="mt-0.5 text-xs text-muted">
                         {PERFIL_LABELS[usuario.perfil]}
                     </p>
