@@ -1,5 +1,5 @@
 import { apiClient } from './client';
-import type { Alocacao, AlocacaoRequest } from '../types';
+import type { AgendaTurno, Alocacao, AlocacaoRequest } from '../types';
 
 export async function alocar(request: AlocacaoRequest): Promise<Alocacao> {
   const { data } = await apiClient.post<Alocacao>('/alocacoes', request);
@@ -20,5 +20,16 @@ export async function historicoDoUsuario(usuarioId: string): Promise<Alocacao[]>
 
 export async function alocadosAtualmenteNoSetor(setorId: string): Promise<Alocacao[]> {
   const { data } = await apiClient.get<Alocacao[]>(`/setores/${setorId}/alocacoes-atuais`);
+  return data;
+}
+
+export async function agendaDoUsuario(
+  usuarioId: string,
+  dataInicio: string,
+  dataFim: string,
+): Promise<AgendaTurno[]> {
+  const { data } = await apiClient.get<AgendaTurno[]>(`/usuarios/${usuarioId}/agenda`, {
+    params: { dataInicio, dataFim },
+  });
   return data;
 }
