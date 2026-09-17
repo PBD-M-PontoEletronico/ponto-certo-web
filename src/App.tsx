@@ -7,6 +7,7 @@ import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { EmpresasPage } from './pages/EmpresasPage';
 import { UsuariosPage } from './pages/UsuariosPage';
+import { NovoUsuarioPage } from './pages/NovoUsuarioPage';
 import { SetoresPage } from './pages/SetoresPage';
 import { AlocacoesPage } from './pages/AlocacoesPage';
 import { EscalasPage } from './pages/EscalasPage';
@@ -35,6 +36,7 @@ export function App() {
                                     }
                                 >
                                     <Route path="/usuarios" element={<UsuariosPage />} />
+                                    <Route path="/usuarios/novo" element={<NovoUsuarioPage />} />
                                 </Route>
 
                                 <Route

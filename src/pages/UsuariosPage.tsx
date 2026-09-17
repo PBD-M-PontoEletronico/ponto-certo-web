@@ -1,11 +1,13 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import * as usuariosApi from '../api/usuarios';
 import * as empresasApi from '../api/empresas';
 import { extrairErro } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { PERFIL_LABELS, type Empresa, type Perfil } from '../types';
+import { PERFIL_LABELS, type Empresa, type Pagina, type Perfil, type Usuario, type UsuarioFiltro } from '../types';
 
-const PERFIS_CADASTRAVEIS: Perfil[] = [
+const PERFIS_FILTRAVEIS: Perfil[] = [
+  'SUPERADMIN',
   'RH_ADMIN',
   'GESTOR',
   'FUNCIONARIO',
@@ -16,20 +18,23 @@ export function UsuariosPage() {
   const { usuario: usuarioLogado } = useAuth();
   const ehSuperAdmin = usuarioLogado?.perfil === 'SUPERADMIN';
 
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [empresas, setEmpresas] = useState<Empresa[]>([]);
+
+  const [filtros, setFiltros] = useState<UsuarioFiltro>({});
+  const [filtrosAplicados, setFiltrosAplicados] = useState<UsuarioFiltro>({});
+  const [pagina, setPagina] = useState(0);
+
+  const [resultado, setResultado] = useState<Pagina<Usuario> | null>(null);
+  const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
-  const [sucesso, setSucesso] = useState<string | null>(null);
-  const [salvando, setSalvando] = useState(false);
 
-  const [nome, setNome] = useState('');
-  const [login, setLogin] = useState('');
-  const [senha, setSenha] = useState('');
-  const [perfil, setPerfil] = useState<Perfil>('FUNCIONARIO');
-  const [empresaId, setEmpresaId] = useState('');
-  const [matricula, setMatricula] = useState(''); // NOVO
-  const [cargo, setCargo] = useState('');         // NOVO
-
-  const ehFuncionario = perfil === 'FUNCIONARIO'; // NOVO
+  // Mensagem de sucesso vinda da página de cadastro (após "cadastrar e sair")
+  const [sucesso, setSucesso] = useState<string | null>(
+    (location.state as { sucesso?: string } | null)?.sucesso ?? null
+  );
 
   useEffect(() => {
     if (ehSuperAdmin) {
@@ -37,182 +42,207 @@ export function UsuariosPage() {
     }
   }, [ehSuperAdmin]);
 
-  async function handleCriar(event: FormEvent) {
-    event.preventDefault();
+  // Debounce: só aplica o filtro (e volta pra primeira página) 350ms depois
+  // da última mudança, pra não disparar uma busca a cada tecla digitada.
+  useEffect(() => {
+    const handle = setTimeout(() => {
+      setFiltrosAplicados(filtros);
+      setPagina(0);
+    }, 350);
+    return () => clearTimeout(handle);
+  }, [filtros]);
+
+  useEffect(() => {
+    setCarregando(true);
     setErro(null);
-    setSucesso(null);
-    setSalvando(true);
+    usuariosApi
+      .buscarUsuarios(filtrosAplicados, pagina)
+      .then(setResultado)
+      .catch((err) => setErro(extrairErro(err).message))
+      .finally(() => setCarregando(false));
+  }, [filtrosAplicados, pagina]);
 
-    try {
-      await usuariosApi.criarUsuario({
-        nome,
-        usuario: login,
-        senha,
-        perfil,
-        empresaId: ehSuperAdmin ? empresaId : undefined,
-        matricula: ehFuncionario ? matricula : undefined, // NOVO
-        cargo: ehFuncionario ? cargo : undefined,          // NOVO
-      });
-
-      setSucesso(`Usuário "${nome}" cadastrado com sucesso.`);
-      setNome('');
-      setLogin('');
-      setSenha('');
-      setPerfil('FUNCIONARIO');
-      setEmpresaId('');
-      setMatricula(''); // NOVO
-      setCargo('');      // NOVO
-    } catch (err) {
-      setErro(extrairErro(err).message);
-    } finally {
-      setSalvando(false);
+  // Limpa o state da navegação para a mensagem não reaparecer num refresh
+  useEffect(() => {
+    if (sucesso) {
+      navigate(location.pathname, { replace: true, state: {} });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  function atualizarFiltro<K extends keyof UsuarioFiltro>(campo: K, valor: UsuarioFiltro[K]) {
+    setSucesso(null);
+    setFiltros((atual) => ({ ...atual, [campo]: valor || undefined }));
   }
+
+  function nomeDaEmpresa(empresaId: string | null): string {
+    if (!empresaId) return '—';
+    return empresas.find((e) => e.id === empresaId)?.razaoSocial ?? '—';
+  }
+
+  const usuarios = resultado?.conteudo ?? [];
+  const inputClasse =
+    'w-full rounded-sm border border-border bg-canvas px-2 py-1 text-xs text-ink outline-none focus:border-primary';
 
   return (
     <div>
-      <header className="mb-8">
-        <h1 className="text-xl font-semibold text-ink">Usuários</h1>
-        <p className="mt-1 text-sm text-muted">
-          {ehSuperAdmin
-            ? 'Cadastre usuários para qualquer empresa.'
-            : 'Cadastre usuários para a sua empresa.'}
-        </p>
+      <header className="mb-8 flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold text-ink">Usuários</h1>
+          <p className="mt-1 text-sm text-muted">
+            {ehSuperAdmin
+              ? 'Busque e filtre os usuários de qualquer empresa.'
+              : 'Busque e filtre os usuários da sua empresa.'}
+          </p>
+        </div>
+
+        <Link
+          to="/usuarios/novo"
+          className="shrink-0 rounded-sm bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
+        >
+          Cadastrar usuário
+        </Link>
       </header>
 
-      <form
-        onSubmit={handleCriar}
-        className="max-w-lg rounded-lg border border-border bg-surface p-5"
-      >
-        <div className="mb-4 grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-ink">
-              Nome
-            </label>
-            <input
-              value={nome}
-              onChange={(e) => setNome(e.target.value)}
-              required
-              className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
-            />
-          </div>
+      {erro && (
+        <p className="mb-4 rounded-sm bg-danger/10 px-3 py-2 text-sm text-danger">
+          {erro}
+        </p>
+      )}
 
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-ink">
-              Usuário (login)
-            </label>
-            <input
-              value={login}
-              onChange={(e) => setLogin(e.target.value)}
-              required
-              className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
-            />
-          </div>
-        </div>
+      {sucesso && (
+        <p className="mb-4 rounded-sm bg-success/10 px-3 py-2 text-sm text-success">
+          {sucesso}
+        </p>
+      )}
 
-        <div className="mb-4">
-          <label className="mb-1.5 block text-sm font-medium text-ink">
-            Senha provisória
-          </label>
-          <input
-            type="password"
-            value={senha}
-            onChange={(e) => setSenha(e.target.value)}
-            required
-            minLength={6}
-            className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
-          />
-        </div>
+      <div className="overflow-x-auto rounded-lg border border-border bg-surface">
+        <table className="w-full text-left text-sm">
+          <thead>
+            <tr className="border-b border-border text-muted">
+              <th className="px-5 py-3 font-medium">Nome</th>
+              <th className="px-5 py-3 font-medium">Usuário</th>
+              <th className="px-5 py-3 font-medium">Perfil</th>
+              {ehSuperAdmin && <th className="px-5 py-3 font-medium">Empresa</th>}
+              <th className="px-5 py-3 font-medium">Matrícula</th>
+              <th className="px-5 py-3 font-medium">Cargo</th>
+            </tr>
+            <tr className="border-b border-border bg-canvas/50">
+              <th className="px-5 py-2">
+                <input
+                  value={filtros.nome ?? ''}
+                  onChange={(e) => atualizarFiltro('nome', e.target.value)}
+                  placeholder="Filtrar..."
+                  className={inputClasse}
+                />
+              </th>
+              <th className="px-5 py-2">
+                <input
+                  value={filtros.usuario ?? ''}
+                  onChange={(e) => atualizarFiltro('usuario', e.target.value)}
+                  placeholder="Filtrar..."
+                  className={inputClasse}
+                />
+              </th>
+              <th className="px-5 py-2">
+                <select
+                  value={filtros.perfil ?? ''}
+                  onChange={(e) => atualizarFiltro('perfil', (e.target.value || undefined) as Perfil | undefined)}
+                  className={inputClasse}
+                >
+                  <option value="">Todos</option>
+                  {PERFIS_FILTRAVEIS.map((p) => (
+                    <option key={p} value={p}>{PERFIL_LABELS[p]}</option>
+                  ))}
+                </select>
+              </th>
+              {ehSuperAdmin && (
+                <th className="px-5 py-2">
+                  <select
+                    value={filtros.empresaId ?? ''}
+                    onChange={(e) => atualizarFiltro('empresaId', e.target.value)}
+                    className={inputClasse}
+                  >
+                    <option value="">Todas</option>
+                    {empresas.map((e) => (
+                      <option key={e.id} value={e.id}>{e.razaoSocial}</option>
+                    ))}
+                  </select>
+                </th>
+              )}
+              <th className="px-5 py-2">
+                <input
+                  value={filtros.matricula ?? ''}
+                  onChange={(e) => atualizarFiltro('matricula', e.target.value)}
+                  placeholder="Filtrar..."
+                  className={inputClasse}
+                />
+              </th>
+              <th className="px-5 py-2">
+                <input
+                  value={filtros.cargo ?? ''}
+                  onChange={(e) => atualizarFiltro('cargo', e.target.value)}
+                  placeholder="Filtrar..."
+                  className={inputClasse}
+                />
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {carregando ? (
+              <tr>
+                <td colSpan={ehSuperAdmin ? 6 : 5} className="px-5 py-8 text-center text-sm text-muted">
+                  Carregando...
+                </td>
+              </tr>
+            ) : usuarios.length === 0 ? (
+              <tr>
+                <td colSpan={ehSuperAdmin ? 6 : 5} className="px-5 py-8 text-center text-sm text-muted">
+                  Nenhum usuário encontrado com esses filtros.
+                </td>
+              </tr>
+            ) : (
+              usuarios.map((u) => (
+                <tr key={u.id} className="border-b border-border last:border-0">
+                  <td className="px-5 py-3 text-ink">{u.nome}</td>
+                  <td className="px-5 py-3 text-muted">{u.usuario}</td>
+                  <td className="px-5 py-3 text-muted">{PERFIL_LABELS[u.perfil]}</td>
+                  {ehSuperAdmin && (
+                    <td className="px-5 py-3 text-muted">{nomeDaEmpresa(u.empresaId)}</td>
+                  )}
+                  <td className="px-5 py-3 text-muted">{u.matricula ?? '—'}</td>
+                  <td className="px-5 py-3 text-muted">{u.cargo ?? '—'}</td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
 
-        <div className="mb-4 grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1.5 block text-sm font-medium text-ink">
-              Perfil
-            </label>
-            <select
-              value={perfil}
-              onChange={(e) => setPerfil(e.target.value as Perfil)}
-              className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
+      {resultado && resultado.totalElementos > 0 && (
+        <div className="mt-4 flex items-center justify-between text-sm text-muted">
+          <span>
+            Página {resultado.paginaAtual + 1} de {resultado.totalPaginas} —{' '}
+            {resultado.totalElementos} usuário{resultado.totalElementos === 1 ? '' : 's'}
+          </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setPagina((p) => Math.max(0, p - 1))}
+              disabled={pagina === 0}
+              className="rounded-sm border border-border px-3 py-1.5 font-medium text-ink transition-colors hover:bg-canvas disabled:opacity-40"
             >
-              {PERFIS_CADASTRAVEIS.map((p) => (
-                <option key={p} value={p}>
-                  {PERFIL_LABELS[p]}
-                </option>
-              ))}
-            </select>
+              Anterior
+            </button>
+            <button
+              onClick={() => setPagina((p) => p + 1)}
+              disabled={pagina + 1 >= resultado.totalPaginas}
+              className="rounded-sm border border-border px-3 py-1.5 font-medium text-ink transition-colors hover:bg-canvas disabled:opacity-40"
+            >
+              Próxima
+            </button>
           </div>
-
-          {ehSuperAdmin && (
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-ink">
-                Empresa
-              </label>
-              <select
-                value={empresaId}
-                onChange={(e) => setEmpresaId(e.target.value)}
-                required
-                className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
-              >
-                <option value="" disabled>
-                  Selecione
-                </option>
-                {empresas.map((empresa) => (
-                  <option key={empresa.id} value={empresa.id}>
-                    {empresa.razaoSocial}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
         </div>
-
-        {/* NOVO: só aparece quando o perfil selecionado é FUNCIONARIO */}
-        {ehFuncionario && (
-          <div className="mb-4 grid grid-cols-2 gap-4 rounded-sm border border-border bg-canvas/50 p-3">
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-ink">
-                Matrícula
-              </label>
-              <input
-                value={matricula}
-                onChange={(e) => setMatricula(e.target.value)}
-                required
-                className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
-              />
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-medium text-ink">
-                Cargo
-              </label>
-              <input
-                value={cargo}
-                onChange={(e) => setCargo(e.target.value)}
-                className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
-              />
-            </div>
-          </div>
-        )}
-
-        {erro && (
-          <p className="mb-4 rounded-sm bg-danger/10 px-3 py-2 text-sm text-danger">
-            {erro}
-          </p>
-        )}
-
-        {sucesso && (
-          <p className="mb-4 rounded-sm bg-success/10 px-3 py-2 text-sm text-success">
-            {sucesso}
-          </p>
-        )}
-
-        <button
-          type="submit"
-          disabled={salvando}
-          className="rounded-sm bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
-        >
-          {salvando ? 'Salvando...' : 'Cadastrar usuário'}
-        </button>
-      </form>
+      )}
     </div>
   );
 }
