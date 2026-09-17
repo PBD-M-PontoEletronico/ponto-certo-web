@@ -1,3 +1,5 @@
+import type { Escala } from './escala';
+
 // Espelha o enum Perfil.java do backend
 export type Perfil =
     | 'SUPERADMIN'
@@ -94,18 +96,32 @@ export interface SetorRequest {
 
 export interface Alocacao {
   id: string;
-  usuario: Usuario; 
+  usuario: Usuario;
   setor: Setor;
+  escala: Escala;
   dataInicio: string;
-  dataFim: string | null;
+  dataFim: string;
 }
 
 // Espelha AlocacaoRequestDTO.java
 export interface AlocacaoRequest {
-  usuarioId: string; 
+  usuarioId: string;
   setorId: string;
+  escalaId: string;
   dataInicio: string;
-  dataFim?: string;
+  dataFim: string;
+}
+
+// Espelha AgendaTurnoDTO.java
+export interface AgendaTurno {
+  data: string;
+  horaInicio: string;
+  horaFim: string;
+  atravessaMeiaNoite: boolean;
+  setorId: string;
+  setorNome: string;
+  escalaId: string;
+  escalaNome: string;
 }
 
 export const POLITICA_FORA_PERIMETRO_LABELS: Record<PoliticaForaPerimetro, string> = {
