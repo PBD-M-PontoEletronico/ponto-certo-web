@@ -124,6 +124,24 @@ export interface AgendaTurno {
   escalaNome: string;
 }
 
+export interface UsuarioFiltro {
+  nome?: string;
+  usuario?: string;
+  perfil?: Perfil;
+  empresaId?: string;
+  matricula?: string;
+  cargo?: string;
+}
+
+// Espelha PaginaDTO.java
+export interface Pagina<T> {
+  conteudo: T[];
+  paginaAtual: number;
+  tamanhoPagina: number;
+  totalElementos: number;
+  totalPaginas: number;
+}
+
 export const POLITICA_FORA_PERIMETRO_LABELS: Record<PoliticaForaPerimetro, string> = {
   BLOQUEAR: 'Bloquear a marcação',
   PENDENTE_ANALISE: 'Aceitar como pendente de análise',
