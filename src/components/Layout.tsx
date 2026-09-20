@@ -93,6 +93,30 @@ export function Layout() {
                         </NavLink>
                     )}
 
+                    {(usuario.perfil === 'SUPERADMIN' ||
+                        usuario.perfil === 'RH_ADMIN') && (
+                        <NavLink
+                            to="/feriados"
+                            className={({ isActive }) =>
+                                `${linkBase} ${isActive ? linkAtivo : linkInativo}`
+                            }
+                        >
+                            Feriados
+                        </NavLink>
+                    )}
+
+                    {(usuario.perfil === 'SUPERADMIN' ||
+                        usuario.perfil === 'RH_ADMIN') && (
+                        <NavLink
+                            to="/afastamentos"
+                            className={({ isActive }) =>
+                                `${linkBase} ${isActive ? linkAtivo : linkInativo}`
+                            }
+                        >
+                            Afastamentos
+                        </NavLink>
+                    )}
+
                 </nav>
 
                 <div className="border-t border-border pt-4">
