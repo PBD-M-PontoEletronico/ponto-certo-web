@@ -11,6 +11,8 @@ import { NovoUsuarioPage } from './pages/NovoUsuarioPage';
 import { SetoresPage } from './pages/SetoresPage';
 import { AlocacoesPage } from './pages/AlocacoesPage';
 import { EscalasPage } from './pages/EscalasPage';
+import { FeriadosPage } from './pages/FeriadosPage';
+import { AfastamentosPage } from './pages/AfastamentosPage';
 import { NovoSetorPage } from './pages/NovoSetorPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 
@@ -62,6 +64,15 @@ export function App() {
                                     }
                                 >
                                     <Route path="/escalas" element={<EscalasPage />} />
+                                </Route>
+
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                    <Route path="/feriados" element={<FeriadosPage />} />
+                                    <Route path="/afastamentos" element={<AfastamentosPage />} />
                                 </Route>
                             </Route>
                         </Route>

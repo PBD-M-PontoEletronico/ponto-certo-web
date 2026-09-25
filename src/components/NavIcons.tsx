@@ -77,6 +77,24 @@ export function IconeEscalas(props: IconProps) {
   );
 }
 
+export function IconeFeriados(props: IconProps) {
+  return (
+    <Icone {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+    </Icone>
+  );
+}
+
+export function IconeAfastamentos(props: IconProps) {
+  return (
+    <Icone {...props}>
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+        d="M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M13 11a4 4 0 100-8 4 4 0 000 8zM15 8h6" />
+    </Icone>
+  );
+}
+
 export function IconeSair(props: IconProps) {
   return (
     <Icone {...props}>

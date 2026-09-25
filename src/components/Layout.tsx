@@ -10,6 +10,8 @@ import {
     IconeSetores,
     IconeAlocacoes,
     IconeEscalas,
+    IconeFeriados,
+    IconeAfastamentos,
     IconeSair,
     IconeMenu,
     IconeFechar,
@@ -35,6 +37,8 @@ const itensNav: ItemNav[] = [
     { to: '/setores', label: 'Setores', icone: IconeSetores, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
     { to: '/alocacoes', label: 'Alocações', icone: IconeAlocacoes, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
     { to: '/escalas', label: 'Escalas', icone: IconeEscalas, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
+    { to: '/feriados', label: 'Feriados', icone: IconeFeriados, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
+    { to: '/afastamentos', label: 'Afastamentos', icone: IconeAfastamentos, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
 ];
 
 export function Layout() {
