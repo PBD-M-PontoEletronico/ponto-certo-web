@@ -14,12 +14,22 @@ export interface LoginRequest {
   senha: string;
 }
 
+// Espelha Tema.java
+export type Tema = 'CLARO' | 'ESCURO';
+
 // Espelha LoginResponseDTO.java
 export interface LoginResponse {
   token: string;
   nome: string;
   perfil: Perfil;
   empresaId: string | null;
+  setorsId: string[];
+  tema: Tema;
+}
+
+// Espelha PreferenciaUsuarioDTO.java
+export interface PreferenciaUsuario {
+  tema: Tema;
 }
 
 // Espelha Empresa.java

@@ -5,6 +5,7 @@ import {
   type ReactNode,
 } from 'react';
 import * as authApi from '../api/auth';
+import { useTheme } from './ThemeContext';
 import type { LoginRequest, LoginResponse, Perfil } from '../types';
 
 interface SessaoUsuario {
@@ -40,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     carregarSessaoSalva
   );
   const [carregando, setCarregando] = useState(false);
+  const { setTema } = useTheme();
 
   async function entrar(request: LoginRequest) {
     setCarregando(true);
@@ -55,6 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(TOKEN_KEY, response.token);
       localStorage.setItem(USUARIO_KEY, JSON.stringify(sessao));
       setUsuario(sessao);
+      // A preferência de tema salva no servidor manda a partir do login,
+      // pra seguir a pessoa entre navegadores/computadores diferentes.
+      setTema(response.tema === 'ESCURO' ? 'dark' : 'light');
     } finally {
       setCarregando(false);
     }

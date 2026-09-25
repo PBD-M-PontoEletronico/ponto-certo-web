@@ -1,16 +1,37 @@
 import React from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { useAuth } from '../context/AuthContext';
+import * as preferenciasApi from '../api/preferencias';
 
-export const ThemeToggle: React.FC = () => {
+interface ThemeToggleProps {
+  className?: string;
+}
+
+export const ThemeToggle: React.FC<ThemeToggleProps> = ({ className }) => {
   const { theme, toggleTheme } = useTheme();
+  const { usuario } = useAuth();
+
+  function handleClick() {
+    const temaAnterior = theme;
+    toggleTheme();
+    // Só existe usuário logado dentro do Layout — na tela de Login, a troca
+    // fica só local mesmo (ninguém autenticado ainda pra persistir).
+    if (usuario) {
+      const novoTema = temaAnterior === 'light' ? 'ESCURO' : 'CLARO';
+      preferenciasApi.atualizarTema(novoTema).catch(() => {});
+    }
+  }
 
   return (
     <button
       type="button"
-      onClick={toggleTheme}
+      onClick={handleClick}
       aria-label="Alternar tema"
-      className="rounded-sm border border-white/30 bg-white/10 p-2 text-white
-                 transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
+      className={
+        className ??
+        `rounded-sm border border-white/30 bg-white/10 p-2 text-white
+         transition-colors hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50`
+      }
     >
       {theme === 'light' ? (
         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
