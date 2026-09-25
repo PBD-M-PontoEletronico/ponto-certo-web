@@ -2,7 +2,38 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-ink: 31 36 48;
+  --color-canvas: 247 247 245;
+  --color-surface: 255 255 255;
+  --color-border: 228 227 222;
+  --color-primary: 43 58 103;
+  --color-primary-light: 62 80 137;
+  --color-primary-dark: 28 39 72;
+  --color-accent: 198 138 46;
+  --color-accent-light: 226 168 59;
+  --color-success: 47 122 82;
+  --color-danger: 184 66 52;
+  --color-muted: 107 114 128;
+}
+
+.dark {
+  --color-ink: 237 237 237;
+  --color-canvas: 21 24 31;
+  --color-surface: 29 33 41;
+  --color-border: 46 50 60;
+  --color-primary: 90 112 189;
+  --color-primary-light: 116 138 209;
+  --color-primary-dark: 43 58 103;
+  --color-accent: 217 169 77;
+  --color-accent-light: 232 189 110;
+  --color-success: 63 160 109;
+  --color-danger: 214 90 72;
+  --color-muted: 154 163 175;
+}
+
 body {
   font-family: 'Inter', system-ui, sans-serif;
-  color: #1f2430;
+  color: rgb(var(--color-ink));
+  background-color: rgb(var(--color-canvas));
 }

@@ -5,22 +5,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        ink: '#1F2430',
-        canvas: '#F7F7F5',
-        surface: '#FFFFFF',
-        border: '#E4E3DE',
+        ink: 'rgb(var(--color-ink) / <alpha-value>)',
+        canvas: 'rgb(var(--color-canvas) / <alpha-value>)',
+        surface: 'rgb(var(--color-surface) / <alpha-value>)',
+        border: 'rgb(var(--color-border) / <alpha-value>)',
         primary: {
-          DEFAULT: '#2B3A67',
-          light: '#3E5089',
-          dark: '#1C2748',
+          DEFAULT: 'rgb(var(--color-primary) / <alpha-value>)',
+          light: 'rgb(var(--color-primary-light) / <alpha-value>)',
+          dark: 'rgb(var(--color-primary-dark) / <alpha-value>)',
         },
         accent: {
-          DEFAULT: '#C68A2E',
-          light: '#E2A83B',
+          DEFAULT: 'rgb(var(--color-accent) / <alpha-value>)',
+          light: 'rgb(var(--color-accent-light) / <alpha-value>)',
         },
-        success: '#2F7A52',
-        danger: '#B84234',
-        muted: '#6B7280',
+        success: 'rgb(var(--color-success) / <alpha-value>)',
+        danger: 'rgb(var(--color-danger) / <alpha-value>)',
+        muted: 'rgb(var(--color-muted) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
