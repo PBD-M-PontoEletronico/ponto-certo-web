@@ -2,9 +2,10 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import * as usuariosApi from '../api/usuarios';
 import * as empresasApi from '../api/empresas';
+import * as setoresApi from '../api/setores';
 import { extrairErro } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { PERFIL_LABELS, type Empresa, type Perfil } from '../types';
+import { PERFIL_LABELS, type Empresa, type Perfil, type Setor } from '../types';
 
 const PERFIS_CADASTRAVEIS: Perfil[] = [
   'RH_ADMIN',
@@ -37,13 +38,28 @@ export function NovoUsuarioPage() {
   const [matricula, setMatricula] = useState('');
   const [cargo, setCargo] = useState('');
 
+  const [setores, setSetores] = useState<Setor[]>([]);
+  const [setorId, setSetorId] = useState('');
+
   const ehFuncionario = perfil === 'FUNCIONARIO';
+  const ehUsuarioSetor = perfil === 'USUARIO_SETOR';
 
   useEffect(() => {
     if (ehSuperAdmin) {
       empresasApi.listarEmpresas().then(setEmpresas).catch(() => {});
     }
   }, [ehSuperAdmin]);
+
+  // Carrega os setores da empresa pra escolher qual o "usuário do setor" vai
+  // representar (superadmin precisa ter escolhido a empresa primeiro).
+  useEffect(() => {
+    if (ehUsuarioSetor && (!ehSuperAdmin || empresaId)) {
+      setoresApi
+        .listarSetores(ehSuperAdmin ? empresaId : undefined)
+        .then(setSetores)
+        .catch(() => {});
+    }
+  }, [ehUsuarioSetor, ehSuperAdmin, empresaId]);
 
   function limparFormulario() {
     setNome('');
@@ -52,6 +68,7 @@ export function NovoUsuarioPage() {
     setPerfil('FUNCIONARIO');
     setMatricula('');
     setCargo('');
+    setSetorId('');
     // Mantém a empresa selecionada ao continuar cadastrando (fluxo mais rápido)
   }
 
@@ -69,6 +86,7 @@ export function NovoUsuarioPage() {
         empresaId: ehSuperAdmin ? empresaId : undefined,
         matricula: ehFuncionario ? matricula : undefined,
         cargo: ehFuncionario ? cargo : undefined,
+        setorId: ehUsuarioSetor ? setorId : undefined,
       });
 
       const mensagem = `Usuário "${nome}" cadastrado com sucesso.`;
@@ -219,6 +237,33 @@ export function NovoUsuarioPage() {
                 className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
               />
             </div>
+          </div>
+        )}
+
+        {ehUsuarioSetor && (
+          <div className="mb-4 rounded-sm border border-border bg-canvas/50 p-3">
+            <label className="mb-1.5 block text-sm font-medium text-ink">
+              Setor
+            </label>
+            <select
+              value={setorId}
+              onChange={(e) => setSetorId(e.target.value)}
+              required
+              className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
+            >
+              <option value="" disabled>
+                Selecione
+              </option>
+              {setores.map((setor) => (
+                <option key={setor.id} value={setor.id}>
+                  {setor.nome}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1.5 text-xs text-muted">
+              Essa conta será usada para logar no relógio (tablet) físico
+              instalado neste setor.
+            </p>
           </div>
         )}
 

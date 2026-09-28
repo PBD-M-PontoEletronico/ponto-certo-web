@@ -97,6 +97,15 @@ export function IconeAfastamentos(props: IconProps) {
   );
 }
 
+export function IconeDispositivos(props: IconProps) {
+  return (
+    <Icone {...props}>
+      <rect x="7" y="2" width="10" height="20" rx="2" strokeWidth={2} />
+      <line x1="11" y1="18" x2="13" y2="18" strokeWidth={2} strokeLinecap="round" />
+    </Icone>
+  );
+}
+
 export function IconeSair(props: IconProps) {
   return (
     <Icone {...props}>
