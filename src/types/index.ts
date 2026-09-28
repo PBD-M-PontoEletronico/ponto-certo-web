@@ -55,6 +55,7 @@ export interface Usuario {
   empresaId: string | null; // era "empresa: Empresa | null"
   matricula: string | null;
   cargo: string | null;
+  setorId: string | null; // NOVO — só preenchido quando perfil = USUARIO_SETOR
 }
 
 // Espelha UsuarioRequestDTO.java
@@ -66,6 +67,7 @@ export interface UsuarioRequest {
   empresaId?: string;
   matricula?: string; // NOVO — obrigatório quando perfil = FUNCIONARIO
   cargo?: string;      // NOVO
+  setorId?: string;    // NOVO — só preenchido quando perfil = USUARIO_SETOR
 }
 
 // Espelha ErrorResponseDTO.java
@@ -225,6 +227,41 @@ export interface Pagina<T> {
   totalElementos: number;
   totalPaginas: number;
 }
+
+export type TipoDispositivo = 'PESSOAL' | 'RELOGIO_SETOR';
+
+export interface Dispositivo {
+  id: string;
+  tipo: TipoDispositivo;
+  identificador: string;
+  usuarioId: string;
+  usuarioNome: string;
+  usuarioPerfil: Perfil;
+  empresaId: string | null;
+  empresaNome: string | null;
+  setorId: string | null;
+  setorNome: string | null;
+  ativo: boolean;
+  dataVinculo: string;
+  ultimoAcesso: string;
+}
+
+export interface DispositivoFiltro {
+  usuarioNome?: string;
+  tipo?: TipoDispositivo;
+  setorId?: string;
+  ativo?: boolean;
+  empresaId?: string;
+  ultimoAcessoDe?: string;
+  ultimoAcessoAte?: string;
+  dataVinculoDe?: string;
+  dataVinculoAte?: string;
+}
+
+export const TIPO_DISPOSITIVO_LABELS: Record<TipoDispositivo, string> = {
+  PESSOAL: 'Pessoal',
+  RELOGIO_SETOR: 'Relógio de setor',
+};
 
 export const POLITICA_FORA_PERIMETRO_LABELS: Record<PoliticaForaPerimetro, string> = {
   BLOQUEAR: 'Bloquear a marcação',

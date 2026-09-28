@@ -15,6 +15,7 @@ import { FeriadosPage } from './pages/FeriadosPage';
 import { AfastamentosPage } from './pages/AfastamentosPage';
 import { NovoSetorPage } from './pages/NovoSetorPage';
 import { NotFoundPage } from './pages/NotFoundPage';
+import { DispositivosPage } from './pages/DispositivoPage';
 
 export function App() {
     return (
@@ -73,6 +74,14 @@ export function App() {
                                 >
                                     <Route path="/feriados" element={<FeriadosPage />} />
                                     <Route path="/afastamentos" element={<AfastamentosPage />} />
+                                </Route>
+
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                     <Route path="/dispositivos" element={<DispositivosPage />} />
                                 </Route>
                             </Route>
                         </Route>
