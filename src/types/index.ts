@@ -290,3 +290,59 @@ export const SITUACAO_DIA_LABELS: Record<SituacaoDia, string> = {
   AFASTAMENTO: 'Afastamento',
   SEM_ALOCACAO: 'Sem alocação',
 };
+
+// Espelha TipoMarcacao.java (nomes exatos — também usados no app mobile)
+export type TipoMarcacao = 'ENTRADA' | 'SAIDA_INTERVALO' | 'RETORNO_INTERVALO' | 'SAIDA';
+
+// Espelha MetodoConfirmacao.java
+export type MetodoConfirmacao = 'FOTO' | 'DIGITAL';
+
+// Espelha StatusMarcacao.java
+export type StatusMarcacao = 'VALIDA' | 'PENDENTE_ANALISE' | 'RECUSADA';
+
+// Espelha MarcacaoResponseDTO.java
+export interface Marcacao {
+  id: string;
+  usuarioId: string;
+  usuarioNome: string;
+  registradoPorId: string | null;
+  registradoPorNome: string | null;
+  setorId: string | null;
+  setorNome: string | null;
+  empresaId: string | null;
+  empresaNome: string | null;
+  tipo: TipoMarcacao;
+  horaAparelho: string;
+  horaCorrigida: string; // hora "de verdade" do toque — use esta pra exibir
+  offline: boolean;
+  recebidaEm: string;
+  latitude: number | null;
+  longitude: number | null;
+  metodoConfirmacao: MetodoConfirmacao;
+  temSelfie: boolean;
+  status: StatusMarcacao;
+  motivoRecusa: string | null;
+}
+
+export interface MarcacaoFiltro {
+  usuarioNome?: string;
+  setorId?: string;
+  empresaId?: string;
+  status?: StatusMarcacao;
+  tipo?: TipoMarcacao;
+  dataDe?: string;
+  dataAte?: string;
+}
+
+export const TIPO_MARCACAO_LABELS: Record<TipoMarcacao, string> = {
+  ENTRADA: 'Entrada',
+  SAIDA_INTERVALO: 'Saída para intervalo',
+  RETORNO_INTERVALO: 'Retorno do intervalo',
+  SAIDA: 'Saída',
+};
+
+export const STATUS_MARCACAO_LABELS: Record<StatusMarcacao, string> = {
+  VALIDA: 'Válida',
+  PENDENTE_ANALISE: 'Pendente de análise',
+  RECUSADA: 'Recusada',
+};

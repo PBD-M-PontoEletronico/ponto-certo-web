@@ -16,6 +16,7 @@ import { AfastamentosPage } from './pages/AfastamentosPage';
 import { NovoSetorPage } from './pages/NovoSetorPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { DispositivosPage } from './pages/DispositivoPage';
+import { MarcacoesPage } from './pages/MarcacoesPage';
 
 export function App() {
     return (
@@ -82,6 +83,14 @@ export function App() {
                                     }
                                 >
                                      <Route path="/dispositivos" element={<DispositivosPage />} />
+                                </Route>
+
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                    <Route path="/marcacoes" element={<MarcacoesPage />} />
                                 </Route>
                             </Route>
                         </Route>
