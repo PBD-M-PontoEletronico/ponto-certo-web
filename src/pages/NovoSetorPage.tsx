@@ -9,6 +9,8 @@ import {
     type Empresa,
     type PoliticaForaPerimetro,
 } from '../types';
+import { buscarCoordenadas } from '../api/geocodificacao';
+import { MapaSelecionarLocal } from '../components/MapaSelecionarLocal';
 
 // Ação disparada ao enviar o formulário: qual botão foi clicado
 type AcaoSalvar = 'continuar' | 'sair';
@@ -36,6 +38,7 @@ export function NovoSetorPage() {
         useState<PoliticaForaPerimetro>('BLOQUEAR');
     const [ignorarLocalizacao, setIgnorarLocalizacao] = useState(false);
     const [empresaIdForm, setEmpresaIdForm] = useState('');
+    const [buscandoEndereco, setBuscandoEndereco] = useState(false);
 
     useEffect(() => {
         if (ehSuperAdmin) {
@@ -89,6 +92,30 @@ export function NovoSetorPage() {
             setAcaoSalvando(null);
         }
     }
+    async function handleBuscarCoordenadas() {
+  if (!endereco.trim()) return;
+
+  setBuscandoEndereco(true);
+  setErro(null);
+  try {
+    const resultado = await buscarCoordenadas(endereco);
+    if (!resultado) {
+      setErro('Endereço não encontrado. Ajuste o pino no mapa manualmente.');
+      return;
+    }
+    setLatitude(String(resultado.latitude));
+    setLongitude(String(resultado.longitude));
+  } catch (err) {
+    setErro(extrairErro(err).message);
+  } finally {
+    setBuscandoEndereco(false);
+  }
+}
+
+function handleMudarNoMapa(lat: number, lng: number) {
+  setLatitude(lat.toFixed(6));
+  setLongitude(lng.toFixed(6));
+}
 
     const salvando = acaoSalvando !== null;
 
@@ -150,17 +177,27 @@ export function NovoSetorPage() {
                     />
                 </div>
 
-                <div className="mb-4">
-                    <label className="mb-1.5 block text-sm font-medium text-ink">
-                        Endereço
-                    </label>
-                    <input
-                        value={endereco}
-                        onChange={(e) => setEndereco(e.target.value)}
-                        required
-                        className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
-                    />
-                </div>
+               <div className="mb-4">
+    <label className="mb-1.5 block text-sm font-medium text-ink">
+        Endereço
+    </label>
+    <div className="flex gap-2">
+        <input
+            value={endereco}
+            onChange={(e) => setEndereco(e.target.value)}
+            required
+            className="w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary"
+        />
+        <button
+            type="button"
+            onClick={handleBuscarCoordenadas}
+            disabled={buscandoEndereco || !endereco.trim()}
+            className="shrink-0 rounded-sm border border-primary px-3 py-2 text-sm font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-50"
+        >
+            {buscandoEndereco ? 'Buscando...' : 'Buscar coordenadas'}
+        </button>
+    </div>
+</div>
 
                 <div className="mb-4 grid grid-cols-2 gap-4">
                     <div>
@@ -190,6 +227,22 @@ export function NovoSetorPage() {
                         />
                     </div>
                 </div>
+
+                <div className="mb-5">
+
+                <label className="mb-1.5 block text-sm font-medium text-ink">
+                    Ajuste fino no mapa
+                </label>
+                <MapaSelecionarLocal
+                    latitude={latitude ? Number(latitude) : null}
+                    longitude={longitude ? Number(longitude) : null}
+                    raioMetros={raioMetros ? Number(raioMetros) : undefined}
+                    onMudar={handleMudarNoMapa}
+                />
+                <p className="mt-1.5 text-xs text-muted">
+                    Clique no mapa ou arraste o pino pra ajustar o ponto exato.
+                </p>
+            </div>
 
                 <div className="mb-5">
                     <label className="mb-1.5 block text-sm font-medium text-ink">
