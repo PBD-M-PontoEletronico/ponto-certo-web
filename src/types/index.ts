@@ -346,3 +346,11 @@ export const STATUS_MARCACAO_LABELS: Record<StatusMarcacao, string> = {
   PENDENTE_ANALISE: 'Pendente de análise',
   RECUSADA: 'Recusada',
 };
+
+export interface SetorFiltro {
+  nome?: string;
+  empresaId?: string;
+  exigirSelfie?: boolean;
+  ignorarLocalizacao?: boolean;
+  politicaForaPerimetro?: PoliticaForaPerimetro;
+}
