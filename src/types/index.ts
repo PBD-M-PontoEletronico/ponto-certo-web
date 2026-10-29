@@ -203,11 +203,36 @@ export interface EspelhoTurno {
   escalaNome: string;
 }
 
+// W10 — o que aconteceu no dia. ajuste = false: batida no aparelho (original);
+// ajuste = true: criada por pedido de ajuste aprovado.
+export interface EspelhoMarcacao {
+  id: string;
+  tipo: TipoMarcacao;
+  hora: string; // instante ISO (já corrigido pelo desvio do relógio)
+  status: StatusMarcacao;
+  offline: boolean;
+  ajuste: boolean;
+  solicitacaoId: string | null;
+  aprovadoPorNome: string | null;
+  aprovadoEm: string | null;
+}
+
+export interface EspelhoJustificativa {
+  solicitacaoId: string;
+  ocorrencia: TipoOcorrencia;
+  status: StatusSolicitacao;
+  parecer: string | null;
+  analisadoPorNome: string | null;
+  analisadoEm: string | null;
+}
+
 export interface EspelhoDia {
   data: string;
   situacao: SituacaoDia;
   descricao: string | null; // nome do feriado ou tipo do afastamento
   turnos: EspelhoTurno[];
+  marcacoes: EspelhoMarcacao[];
+  justificativas: EspelhoJustificativa[];
 }
 
 export interface UsuarioFiltro {
@@ -318,10 +343,12 @@ export interface Marcacao {
   recebidaEm: string;
   latitude: number | null;
   longitude: number | null;
-  metodoConfirmacao: MetodoConfirmacao;
+  metodoConfirmacao: MetodoConfirmacao | null; // nulo nas marcações de ajuste
   temSelfie: boolean;
   status: StatusMarcacao;
   motivoRecusa: string | null;
+  ajuste: boolean; // W10 — criada por pedido de ajuste aprovado
+  solicitacaoId: string | null;
 }
 
 export interface MarcacaoFiltro {
@@ -354,3 +381,93 @@ export interface SetorFiltro {
   ignorarLocalizacao?: boolean;
   politicaForaPerimetro?: PoliticaForaPerimetro;
 }
+// ---------------------------------------------------------------------------
+// W10 — justificativas e solicitações de ajuste
+
+// Espelha TipoSolicitacao.java, TipoOcorrencia.java e StatusSolicitacao.java
+export type TipoSolicitacao = 'JUSTIFICATIVA' | 'AJUSTE';
+export type TipoOcorrencia = 'ATRASO' | 'FALTA' | 'SAIDA_ANTECIPADA';
+export type StatusSolicitacao = 'PENDENTE' | 'APROVADA' | 'RECUSADA';
+
+// Espelha SolicitacaoResponseDTO.java
+export interface Solicitacao {
+  id: string;
+  tipo: TipoSolicitacao;
+  status: StatusSolicitacao;
+  usuarioId: string;
+  usuarioNome: string;
+  usuarioMatricula: string | null;
+  empresaId: string | null;
+  empresaNome: string | null;
+  solicitanteId: string;
+  solicitanteNome: string;
+  criadoEm: string;
+  data: string;
+  ocorrencia: TipoOcorrencia | null;
+  tipoMarcacao: TipoMarcacao | null;
+  horaPretendida: string | null; // "08:00:00"
+  motivo: string;
+  temAnexo: boolean;
+  anexoNome: string | null;
+  parecer: string | null;
+  analisadoPorId: string | null;
+  analisadoPorNome: string | null;
+  analisadoEm: string | null;
+  marcacaoGeradaId: string | null;
+}
+
+// Campos do formulário (a API recebe como multipart/form-data)
+export interface SolicitacaoRequest {
+  usuarioId?: string;
+  tipo: TipoSolicitacao;
+  data: string;
+  ocorrencia?: TipoOcorrencia;
+  tipoMarcacao?: TipoMarcacao;
+  horaPretendida?: string; // "HH:mm"
+  motivo: string;
+  anexo?: File | null;
+}
+
+export interface SolicitacaoFiltro {
+  usuarioNome?: string;
+  empresaId?: string;
+  status?: StatusSolicitacao;
+  tipo?: TipoSolicitacao;
+  dataDe?: string;
+  dataAte?: string;
+}
+
+// Espelha SolicitacaoContextoDTO.java
+export interface SolicitacaoContexto {
+  situacao: SituacaoDia;
+  descricao: string | null;
+  turnosPrevistos: EspelhoTurno[];
+  marcacoesDoDia: Marcacao[];
+  periodoFechado: boolean;
+}
+
+// Espelha FechamentoResponseDTO.java
+export interface Fechamento {
+  id: string;
+  empresaId: string;
+  mes: string; // "AAAA-MM"
+  fechadoEm: string;
+  fechadoPorNome: string;
+}
+
+export const TIPO_SOLICITACAO_LABELS: Record<TipoSolicitacao, string> = {
+  JUSTIFICATIVA: 'Justificativa',
+  AJUSTE: 'Ajuste de ponto',
+};
+
+export const TIPO_OCORRENCIA_LABELS: Record<TipoOcorrencia, string> = {
+  ATRASO: 'Atraso',
+  FALTA: 'Falta',
+  SAIDA_ANTECIPADA: 'Saída antecipada',
+};
+
+export const STATUS_SOLICITACAO_LABELS: Record<StatusSolicitacao, string> = {
+  PENDENTE: 'Pendente',
+  APROVADA: 'Aprovado',
+  RECUSADA: 'Recusado',
+};

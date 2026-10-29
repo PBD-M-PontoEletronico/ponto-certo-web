@@ -17,6 +17,7 @@ import { NovoSetorPage } from './pages/NovoSetorPage';
 import { NotFoundPage } from './pages/NotFoundPage';
 import { DispositivosPage } from './pages/DispositivoPage';
 import { MarcacoesPage } from './pages/MarcacoesPage';
+import { SolicitacoesPage } from './pages/SolicitacoesPage';
 
 export function App() {
     return (
@@ -91,6 +92,15 @@ export function App() {
                                     }
                                 >
                                     <Route path="/marcacoes" element={<MarcacoesPage />} />
+                                </Route>
+
+                                {/* W10 — gestor também entra: ele analisa os pedidos */}
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN', 'GESTOR']} />
+                                    }
+                                >
+                                    <Route path="/solicitacoes" element={<SolicitacoesPage />} />
                                 </Route>
                             </Route>
                         </Route>

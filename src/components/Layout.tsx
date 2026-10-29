@@ -16,7 +16,8 @@ import {
     IconeMenu,
     IconeFechar,
     IconeDispositivos,
-    IconeMarcacoes
+    IconeMarcacoes,
+    IconePedidos,
 } from './NavIcons';
 
 const linkBase =
@@ -43,6 +44,7 @@ const itensNav: ItemNav[] = [
     { to: '/afastamentos', label: 'Afastamentos', icone: IconeAfastamentos, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
     { to: '/dispositivos', label: 'Dispositivos', icone: IconeDispositivos, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
     { to: '/marcacoes', label: 'Marcações', icone: IconeMarcacoes, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
+    { to: '/solicitacoes', label: 'Pedidos', icone: IconePedidos, perfis: ['SUPERADMIN', 'RH_ADMIN', 'GESTOR'] },
 ];
 
 export function Layout() {

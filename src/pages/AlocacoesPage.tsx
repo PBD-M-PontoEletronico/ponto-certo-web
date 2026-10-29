@@ -18,10 +18,14 @@ import {
 } from '../utils/datas';
 import {
   SITUACAO_DIA_LABELS,
+  STATUS_MARCACAO_LABELS,
+  TIPO_MARCACAO_LABELS,
+  TIPO_OCORRENCIA_LABELS,
   type AgendaTurno,
   type Alocacao,
   type Empresa,
   type EspelhoDia,
+  type EspelhoMarcacao,
   type SituacaoDia,
   type Setor,
   type Usuario,
@@ -44,6 +48,30 @@ const ESTILO_SITUACAO_DIA: Record<SituacaoDia, string> = {
   AFASTAMENTO: 'bg-primary/10 text-primary',
   SEM_ALOCACAO: 'text-muted',
 };
+
+// Instante ISO -> "08:03"
+function horaDoInstante(instante: string): string {
+  return new Date(instante).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Uma linha de marcação no espelho (coluna "Batido" ou "Ajustado")
+function LinhaMarcacao({ m }: { m: EspelhoMarcacao }) {
+  return (
+    <div className={m.status === 'RECUSADA' ? 'line-through opacity-60' : undefined}>
+      <span className="text-ink">{horaDoInstante(m.hora)}</span>{' '}
+      <span className="text-xs">{TIPO_MARCACAO_LABELS[m.tipo]}</span>
+      {m.status !== 'VALIDA' && (
+        <span className="ml-1 text-xs text-danger">({STATUS_MARCACAO_LABELS[m.status]})</span>
+      )}
+      {m.ajuste && m.aprovadoPorNome && (
+        <div className="text-xs">
+          aprovado por {m.aprovadoPorNome}
+          {m.aprovadoEm && ` em ${new Date(m.aprovadoEm).toLocaleDateString('pt-BR')}`}
+        </div>
+      )}
+    </div>
+  );
+}
 
 const campo =
   'w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary';
@@ -555,8 +583,9 @@ export function AlocacoesPage() {
               <div>
                 <p className="mb-1.5 text-sm font-medium text-ink">Espelho do mês</p>
                 <p className="text-xs text-muted">
-                  Cada dia mostra a escala que valia naquela data. Feriado e afastamento não geram
-                  falta nem atraso.
+                  Cada dia mostra a escala que valia naquela data e, lado a lado, o que foi batido no
+                  aparelho e o que entrou por ajuste aprovado. Feriado e afastamento não geram falta
+                  nem atraso.
                 </p>
               </div>
               <div className="ml-auto">
@@ -577,12 +606,15 @@ export function AlocacoesPage() {
             ) : espelho.length === 0 ? (
               <p className="px-5 py-8 text-center text-sm text-muted">Nenhum dado para o mês.</p>
             ) : (
+              <div className="overflow-x-auto">
               <table className="w-full text-left text-sm">
                 <thead>
                   <tr className="border-b border-border text-muted">
                     <th className="px-5 py-3 font-medium">Data</th>
                     <th className="px-5 py-3 font-medium">Situação</th>
-                    <th className="px-5 py-3 font-medium">Detalhe</th>
+                    <th className="px-5 py-3 font-medium">Previsto</th>
+                    <th className="px-5 py-3 font-medium">Batido</th>
+                    <th className="px-5 py-3 font-medium">Ajustado</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -598,6 +630,18 @@ export function AlocacoesPage() {
                         >
                           {SITUACAO_DIA_LABELS[dia.situacao]}
                         </span>
+                        {dia.justificativas.map((j) => (
+                          <div
+                            key={j.solicitacaoId}
+                            className="mt-1 text-xs text-muted"
+                            title={j.parecer ?? undefined}
+                          >
+                            {TIPO_OCORRENCIA_LABELS[j.ocorrencia]}{' '}
+                            {j.status === 'APROVADA'
+                              ? `justificado${j.analisadoPorNome ? ` por ${j.analisadoPorNome}` : ''}`
+                              : '— justificativa pendente'}
+                          </div>
+                        ))}
                       </td>
                       <td className="px-5 py-3 text-muted">
                         {dia.turnos.length > 0
@@ -616,10 +660,25 @@ export function AlocacoesPage() {
                             ))
                           : (dia.descricao ?? '—')}
                       </td>
+                      <td className="px-5 py-3 text-muted">
+                        {dia.marcacoes.some((m) => !m.ajuste)
+                          ? dia.marcacoes
+                              .filter((m) => !m.ajuste)
+                              .map((m) => <LinhaMarcacao key={m.id} m={m} />)
+                          : '—'}
+                      </td>
+                      <td className="px-5 py-3 text-muted">
+                        {dia.marcacoes.some((m) => m.ajuste)
+                          ? dia.marcacoes
+                              .filter((m) => m.ajuste)
+                              .map((m) => <LinhaMarcacao key={m.id} m={m} />)
+                          : '—'}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
 
