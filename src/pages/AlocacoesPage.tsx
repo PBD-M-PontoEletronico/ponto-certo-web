@@ -7,6 +7,8 @@ import * as empresasApi from '../api/empresas';
 import { extrairErro } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { mensagemDoErro } from '../utils/erros';
+import { ComboboxBusca } from '../components/ComboboxBusca';
+import { Modal } from '../components/Modal';
 import {
   diaDaSemana,
   formatarData,
@@ -33,6 +35,7 @@ import {
 import type { Escala } from '../types/escala';
 
 type SituacaoAlocacao = 'VIGENTE' | 'FUTURA' | 'ENCERRADA';
+type AbaAlocacoes = 'historico' | 'espelho' | 'agenda';
 
 function situacaoDaAlocacao(alocacao: Alocacao): SituacaoAlocacao {
   const hoje = hojeISO();
@@ -76,6 +79,10 @@ function LinhaMarcacao({ m }: { m: EspelhoMarcacao }) {
 const campo =
   'w-full rounded-sm border border-border bg-canvas px-3 py-2 text-sm text-ink outline-none focus:border-primary';
 
+const abaBase = 'px-4 py-2.5 text-sm font-medium border-b-2 transition-colors';
+const abaAtivaClasse = 'border-primary text-primary';
+const abaInativaClasse = 'border-transparent text-muted hover:text-ink';
+
 export function AlocacoesPage() {
   const { usuario: usuarioLogado } = useAuth();
   const ehSuperAdmin = usuarioLogado?.perfil === 'SUPERADMIN';
@@ -96,6 +103,9 @@ export function AlocacoesPage() {
   const [erro, setErro] = useState<string | null>(null);
   const [sucesso, setSucesso] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
+
+  const [abaAtiva, setAbaAtiva] = useState<AbaAlocacoes>('historico');
+  const [modalNovaAlocacaoAberto, setModalNovaAlocacaoAberto] = useState(false);
 
   // Troca de escala (no meio de uma alocação)
   const [trocando, setTrocando] = useState<Alocacao | null>(null);
@@ -146,6 +156,7 @@ export function AlocacoesPage() {
   useEffect(() => {
     setTrocando(null);
     setSucesso(null);
+    setAbaAtiva('historico');
     if (usuarioId) {
       alocacoesApi.historicoDoUsuario(usuarioId).then(setHistorico).catch(() => {});
       setAgenda([]);
@@ -191,10 +202,18 @@ export function AlocacoesPage() {
     }
   }
 
+  function abrirModalNovaAlocacao() {
+    setSetorId('');
+    setEscalaId('');
+    setDataInicio('');
+    setDataFim('');
+    setErro(null);
+    setModalNovaAlocacaoAberto(true);
+  }
+
   async function handleAlocar(event: FormEvent) {
     event.preventDefault();
     setErro(null);
-    setSucesso(null);
     setSalvando(true);
 
     try {
@@ -205,10 +224,9 @@ export function AlocacoesPage() {
         dataInicio,
         dataFim,
       });
-      setSetorId('');
-      setEscalaId('');
-      setDataInicio('');
-      setDataFim('');
+      setModalNovaAlocacaoAberto(false);
+      setSucesso('Alocação registrada com sucesso.');
+      setAbaAtiva('historico');
       const atualizado = await alocacoesApi.historicoDoUsuario(usuarioId);
       setHistorico(atualizado);
     } catch (err) {
@@ -264,6 +282,7 @@ export function AlocacoesPage() {
         `Escala trocada: a anterior termina em ${formatarData(resultado.encerrada.dataFim)} ` +
           `e a nova começa em ${formatarData(resultado.nova.dataInicio)}.`,
       );
+      setAbaAtiva('historico');
       const atualizado = await alocacoesApi.historicoDoUsuario(usuarioId);
       setHistorico(atualizado);
     } catch (err) {
@@ -289,6 +308,8 @@ export function AlocacoesPage() {
   // Mais recentes primeiro
   const historicoOrdenado = [...historico].sort((a, b) => b.dataInicio.localeCompare(a.dataInicio));
 
+  const nomeDoFuncionarioSelecionado = usuarios.find((u) => u.id === usuarioId)?.nome ?? '';
+
   return (
     <div>
       <header className="mb-8">
@@ -299,36 +320,29 @@ export function AlocacoesPage() {
       </header>
 
       {ehSuperAdmin && (
-        <div className="mb-6 max-w-xs">
+        <div className="mb-4 max-w-xs">
           <label className="mb-1.5 block text-sm font-medium text-ink">Empresa</label>
-          <select
-            value={empresaSelecionada}
-            onChange={(e) => setEmpresaSelecionada(e.target.value)}
-            className={campo}
-          >
-            <option value="">Selecione uma empresa</option>
-            {empresas.map((e) => (
-              <option key={e.id} value={e.id}>{e.razaoSocial}</option>
-            ))}
-          </select>
+          <ComboboxBusca
+            opcoes={empresas.map((e) => ({ id: e.id, label: e.razaoSocial }))}
+            valor={empresaSelecionada}
+            onSelecionar={setEmpresaSelecionada}
+            placeholder="Digite pra buscar a empresa..."
+          />
         </div>
       )}
 
       {(!ehSuperAdmin || empresaSelecionada) && (
         <div className="mb-6 max-w-xs">
           <label className="mb-1.5 block text-sm font-medium text-ink">Funcionário</label>
-          <select
-            value={usuarioId}
-            onChange={(e) => setUsuarioId(e.target.value)}
-            className={campo}
-          >
-            <option value="">Selecione um funcionário</option>
-            {usuarios.map((u) => (
-              <option key={u.id} value={u.id}>
-                {u.nome} {u.matricula ? `(${u.matricula})` : ''}
-              </option>
-            ))}
-          </select>
+          <ComboboxBusca
+            opcoes={usuarios.map((u) => ({
+              id: u.id,
+              label: u.matricula ? `${u.nome} (${u.matricula})` : u.nome,
+            }))}
+            valor={usuarioId}
+            onSelecionar={setUsuarioId}
+            placeholder="Digite pra buscar o funcionário..."
+          />
           {usuarios.length === 0 && (
             <p className="mt-1.5 text-xs text-muted">
               Nenhum usuário com perfil "Funcionário" cadastrado ainda.
@@ -339,10 +353,298 @@ export function AlocacoesPage() {
 
       {usuarioId && (
         <>
-          <div className="grid grid-cols-1 gap-8 lg:grid-cols-[320px_1fr]">
-            <form onSubmit={handleAlocar} className="h-fit rounded-lg border border-border bg-surface p-5">
-              <p className="mb-4 text-sm font-medium text-ink">Nova alocação</p>
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 border-b border-border">
+            <div className="flex gap-1">
+              <button
+                onClick={() => setAbaAtiva('historico')}
+                className={`${abaBase} ${abaAtiva === 'historico' ? abaAtivaClasse : abaInativaClasse}`}
+              >
+                Histórico de escalas
+              </button>
+              <button
+                onClick={() => setAbaAtiva('espelho')}
+                className={`${abaBase} ${abaAtiva === 'espelho' ? abaAtivaClasse : abaInativaClasse}`}
+              >
+                Espelho do mês
+              </button>
+              <button
+                onClick={() => setAbaAtiva('agenda')}
+                className={`${abaBase} ${abaAtiva === 'agenda' ? abaAtivaClasse : abaInativaClasse}`}
+              >
+                Agenda
+              </button>
+            </div>
 
+            <button
+              onClick={abrirModalNovaAlocacao}
+              className="mb-2 shrink-0 rounded-sm bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark"
+            >
+              Nova alocação
+            </button>
+          </div>
+
+          {sucesso && (
+            <p className="mb-4 rounded-sm bg-success/10 px-3 py-2 text-sm text-success">{sucesso}</p>
+          )}
+
+          {abaAtiva === 'historico' && (
+            <div className="rounded-lg border border-border bg-surface">
+              {historicoOrdenado.length === 0 ? (
+                <p className="px-5 py-8 text-center text-sm text-muted">Nenhuma alocação ainda.</p>
+              ) : (
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-muted">
+                      <th className="px-5 py-3 font-medium">Setor</th>
+                      <th className="px-5 py-3 font-medium">Escala</th>
+                      <th className="px-5 py-3 font-medium">Período</th>
+                      <th className="px-5 py-3 font-medium">Situação</th>
+                      <th className="px-5 py-3"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {historicoOrdenado.map((a) => {
+                      const situacao = situacaoDaAlocacao(a);
+                      return (
+                        <tr key={a.id} className="border-b border-border last:border-0">
+                          <td className="px-5 py-3 text-ink">{a.setor.nome}</td>
+                          <td className="px-5 py-3 text-ink">{a.escala.nome}</td>
+                          <td className="px-5 py-3 text-muted">
+                            {formatarData(a.dataInicio)} a {formatarData(a.dataFim)}
+                          </td>
+                          <td className="px-5 py-3">
+                            {situacao === 'VIGENTE' && (
+                              <span className="rounded-sm bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
+                                Vigente
+                              </span>
+                            )}
+                            {situacao === 'FUTURA' && (
+                              <span className="rounded-sm bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                                Futura
+                              </span>
+                            )}
+                            {situacao === 'ENCERRADA' && (
+                              <span className="text-muted">Encerrada</span>
+                            )}
+                          </td>
+                          <td className="whitespace-nowrap px-5 py-3 text-right">
+                            {situacao !== 'ENCERRADA' && (
+                              <>
+                                <button
+                                  onClick={() => abrirTroca(a)}
+                                  className="mr-4 text-sm font-medium text-primary hover:underline"
+                                >
+                                  Trocar escala
+                                </button>
+                                <button
+                                  onClick={() => handleEncerrar(a.id)}
+                                  className="text-sm font-medium text-primary hover:underline"
+                                >
+                                  Encerrar
+                                </button>
+                              </>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          {abaAtiva === 'espelho' && (
+            <div className="rounded-lg border border-border bg-surface">
+              <div className="flex flex-wrap items-end gap-4 border-b border-border px-5 py-4">
+                <div>
+                  <p className="mb-1.5 text-sm font-medium text-ink">Espelho do mês</p>
+                  <p className="text-xs text-muted">
+                    Cada dia mostra a escala que valia naquela data e, lado a lado, o que foi batido no
+                    aparelho e o que entrou por ajuste aprovado. Feriado e afastamento não geram falta
+                    nem atraso.
+                  </p>
+                </div>
+                <div className="ml-auto">
+                  <label className="mb-1.5 block text-xs font-medium text-ink">Mês</label>
+                  <input
+                    type="month"
+                    value={mesEspelho}
+                    onChange={(e) => e.target.value && setMesEspelho(e.target.value)}
+                    className="rounded-sm border border-border bg-canvas px-3 py-1.5 text-sm text-ink outline-none focus:border-primary"
+                  />
+                </div>
+              </div>
+
+              {erroEspelho && <p className="px-5 py-3 text-sm text-danger">{erroEspelho}</p>}
+
+              {carregandoEspelho && espelho.length === 0 ? (
+                <p className="px-5 py-8 text-center text-sm text-muted">Carregando...</p>
+              ) : espelho.length === 0 ? (
+                <p className="px-5 py-8 text-center text-sm text-muted">Nenhum dado para o mês.</p>
+              ) : (
+                <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-muted">
+                      <th className="px-5 py-3 font-medium">Data</th>
+                      <th className="px-5 py-3 font-medium">Situação</th>
+                      <th className="px-5 py-3 font-medium">Previsto</th>
+                      <th className="px-5 py-3 font-medium">Batido</th>
+                      <th className="px-5 py-3 font-medium">Ajustado</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {espelho.map((dia) => (
+                      <tr key={dia.data} className="border-b border-border last:border-0">
+                        <td className="whitespace-nowrap px-5 py-3 text-ink">
+                          {formatarData(dia.data)}
+                          <span className="ml-2 text-xs text-muted">{diaDaSemana(dia.data)}</span>
+                        </td>
+                        <td className="px-5 py-3">
+                          <span
+                            className={`rounded-sm px-2 py-0.5 text-xs font-medium ${ESTILO_SITUACAO_DIA[dia.situacao]}`}
+                          >
+                            {SITUACAO_DIA_LABELS[dia.situacao]}
+                          </span>
+                          {dia.justificativas.map((j) => (
+                            <div
+                              key={j.solicitacaoId}
+                              className="mt-1 text-xs text-muted"
+                              title={j.parecer ?? undefined}
+                            >
+                              {TIPO_OCORRENCIA_LABELS[j.ocorrencia]}{' '}
+                              {j.status === 'APROVADA'
+                                ? `justificado${j.analisadoPorNome ? ` por ${j.analisadoPorNome}` : ''}`
+                                : '— justificativa pendente'}
+                            </div>
+                          ))}
+                        </td>
+                        <td className="px-5 py-3 text-muted">
+                          {dia.turnos.length > 0
+                            ? dia.turnos.map((t, i) => (
+                                <div key={`${t.setorId}-${t.horaInicio}-${i}`}>
+                                  {formatarHora(t.horaInicio)} às {formatarHora(t.horaFim)}
+                                  {t.atravessaMeiaNoite && (
+                                    <span className="ml-2 rounded-sm bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                                      vira o dia
+                                    </span>
+                                  )}
+                                  <span className="ml-2 text-xs">
+                                    {t.escalaNome} · {t.setorNome}
+                                  </span>
+                                </div>
+                              ))
+                            : (dia.descricao ?? '—')}
+                        </td>
+                        <td className="px-5 py-3 text-muted">
+                          {dia.marcacoes.some((m) => !m.ajuste)
+                            ? dia.marcacoes
+                                .filter((m) => !m.ajuste)
+                                .map((m) => <LinhaMarcacao key={m.id} m={m} />)
+                            : '—'}
+                        </td>
+                        <td className="px-5 py-3 text-muted">
+                          {dia.marcacoes.some((m) => m.ajuste)
+                            ? dia.marcacoes
+                                .filter((m) => m.ajuste)
+                                .map((m) => <LinhaMarcacao key={m.id} m={m} />)
+                            : '—'}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                </div>
+              )}
+            </div>
+          )}
+
+          {abaAtiva === 'agenda' && (
+            <div className="rounded-lg border border-border bg-surface">
+              <div className="flex flex-wrap items-end gap-4 border-b border-border px-5 py-4">
+                <div>
+                  <p className="mb-1.5 text-sm font-medium text-ink">Agenda do funcionário</p>
+                  <p className="text-xs text-muted">
+                    Turnos previstos no período, em todos os setores (sem feriados e afastamentos).
+                  </p>
+                </div>
+                <div className="ml-auto flex flex-wrap items-end gap-3">
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-ink">De</label>
+                    <input
+                      type="date"
+                      value={agendaInicio}
+                      onChange={(e) => setAgendaInicio(e.target.value)}
+                      className="rounded-sm border border-border bg-canvas px-3 py-1.5 text-sm text-ink outline-none focus:border-primary"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1.5 block text-xs font-medium text-ink">Até</label>
+                    <input
+                      type="date"
+                      value={agendaFim}
+                      onChange={(e) => setAgendaFim(e.target.value)}
+                      className="rounded-sm border border-border bg-canvas px-3 py-1.5 text-sm text-ink outline-none focus:border-primary"
+                    />
+                  </div>
+                  <button
+                    onClick={handleVerAgenda}
+                    disabled={carregandoAgenda}
+                    className="rounded-sm bg-primary px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
+                  >
+                    {carregandoAgenda ? 'Buscando...' : 'Ver agenda'}
+                  </button>
+                </div>
+              </div>
+
+              {erroAgenda && (
+                <p className="px-5 py-3 text-sm text-danger">{erroAgenda}</p>
+              )}
+
+              {agenda.length === 0 ? (
+                <p className="px-5 py-8 text-center text-sm text-muted">
+                  Nenhum turno no período — clique em "Ver agenda".
+                </p>
+              ) : (
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-muted">
+                      <th className="px-5 py-3 font-medium">Data</th>
+                      <th className="px-5 py-3 font-medium">Setor</th>
+                      <th className="px-5 py-3 font-medium">Escala</th>
+                      <th className="px-5 py-3 font-medium">Horário</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {agenda.map((t, i) => (
+                      <tr key={`${t.data}-${t.setorId}-${t.horaInicio}-${i}`} className="border-b border-border last:border-0">
+                        <td className="px-5 py-3 text-ink">{formatarData(t.data)}</td>
+                        <td className="px-5 py-3 text-ink">{t.setorNome}</td>
+                        <td className="px-5 py-3 text-muted">{t.escalaNome}</td>
+                        <td className="px-5 py-3 text-muted">
+                          {formatarHora(t.horaInicio)} às {formatarHora(t.horaFim)}
+                          {t.atravessaMeiaNoite && (
+                            <span className="ml-2 rounded-sm bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
+                              vira o dia
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
+
+          <Modal
+            titulo={`Nova alocação — ${nomeDoFuncionarioSelecionado}`}
+            aberto={modalNovaAlocacaoAberto}
+            onFechar={() => setModalNovaAlocacaoAberto(false)}
+            impedirFechar={salvando}
+          >
+            <form onSubmit={handleAlocar}>
               <div className="mb-4">
                 <label className="mb-1.5 block text-sm font-medium text-ink">Setor</label>
                 <select
@@ -405,358 +707,117 @@ export function AlocacoesPage() {
                 <p className="mb-4 rounded-sm bg-danger/10 px-3 py-2 text-sm text-danger">{erro}</p>
               )}
 
-              <button
-                type="submit"
-                disabled={salvando}
-                className="w-full rounded-sm bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
-              >
-                {salvando ? 'Salvando...' : 'Alocar'}
-              </button>
-            </form>
-
-            <div className="space-y-6">
-              {sucesso && (
-                <p className="rounded-sm bg-success/10 px-3 py-2 text-sm text-success">{sucesso}</p>
-              )}
-
-              {trocando && (
-                <form onSubmit={handleTrocar} className="rounded-lg border border-accent bg-surface p-5">
-                  <p className="text-sm font-medium text-ink">
-                    Trocar escala — {trocando.escala.nome} ({trocando.setor.nome})
-                  </p>
-                  <p className="mb-4 mt-1 text-xs text-muted">
-                    A alocação atual termina no dia anterior à troca e a nova começa na data
-                    escolhida. Nada é apagado: o histórico e o espelho dos dias que já passaram
-                    continuam com a escala antiga.
-                  </p>
-
-                  <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium text-ink">Nova escala</label>
-                      <select
-                        value={trocaEscalaId}
-                        onChange={(e) => setTrocaEscalaId(e.target.value)}
-                        required
-                        className={campo}
-                      >
-                        <option value="" disabled>Selecione</option>
-                        {escalas.map((e) => (
-                          <option key={e.id} value={e.id}>{e.nome}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium text-ink">Setor</label>
-                      <select
-                        value={trocaSetorId}
-                        onChange={(e) => setTrocaSetorId(e.target.value)}
-                        required
-                        className={campo}
-                      >
-                        {setores.map((s) => (
-                          <option key={s.id} value={s.id}>{s.nome}</option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium text-ink">A partir de</label>
-                      <input
-                        type="date"
-                        value={trocaData}
-                        min={hojeISO()}
-                        onChange={(e) => setTrocaData(e.target.value)}
-                        required
-                        className={campo}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="mb-1.5 block text-sm font-medium text-ink">Até</label>
-                      <input
-                        type="date"
-                        value={trocaDataFim}
-                        min={trocaData || undefined}
-                        onChange={(e) => setTrocaDataFim(e.target.value)}
-                        required
-                        className={campo}
-                      />
-                    </div>
-                  </div>
-
-                  {trocaErro && (
-                    <p className="mb-4 rounded-sm bg-danger/10 px-3 py-2 text-sm text-danger">{trocaErro}</p>
-                  )}
-
-                  <div className="flex gap-3">
-                    <button
-                      type="submit"
-                      disabled={salvandoTroca}
-                      className="rounded-sm bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
-                    >
-                      {salvandoTroca ? 'Trocando...' : 'Trocar escala'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setTrocando(null)}
-                      className="rounded-sm px-4 py-2 text-sm font-medium text-muted hover:text-ink"
-                    >
-                      Cancelar
-                    </button>
-                  </div>
-                </form>
-              )}
-
-              <div className="rounded-lg border border-border bg-surface">
-                <p className="border-b border-border px-5 py-3 text-sm font-medium text-ink">
-                  Histórico de escalas
-                </p>
-                {historicoOrdenado.length === 0 ? (
-                  <p className="px-5 py-8 text-center text-sm text-muted">Nenhuma alocação ainda.</p>
-                ) : (
-                  <table className="w-full text-left text-sm">
-                    <thead>
-                      <tr className="border-b border-border text-muted">
-                        <th className="px-5 py-3 font-medium">Setor</th>
-                        <th className="px-5 py-3 font-medium">Escala</th>
-                        <th className="px-5 py-3 font-medium">Período</th>
-                        <th className="px-5 py-3 font-medium">Situação</th>
-                        <th className="px-5 py-3"></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {historicoOrdenado.map((a) => {
-                        const situacao = situacaoDaAlocacao(a);
-                        return (
-                          <tr key={a.id} className="border-b border-border last:border-0">
-                            <td className="px-5 py-3 text-ink">{a.setor.nome}</td>
-                            <td className="px-5 py-3 text-ink">{a.escala.nome}</td>
-                            <td className="px-5 py-3 text-muted">
-                              {formatarData(a.dataInicio)} a {formatarData(a.dataFim)}
-                            </td>
-                            <td className="px-5 py-3">
-                              {situacao === 'VIGENTE' && (
-                                <span className="rounded-sm bg-success/10 px-2 py-0.5 text-xs font-medium text-success">
-                                  Vigente
-                                </span>
-                              )}
-                              {situacao === 'FUTURA' && (
-                                <span className="rounded-sm bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
-                                  Futura
-                                </span>
-                              )}
-                              {situacao === 'ENCERRADA' && (
-                                <span className="text-muted">Encerrada</span>
-                              )}
-                            </td>
-                            <td className="whitespace-nowrap px-5 py-3 text-right">
-                              {situacao !== 'ENCERRADA' && (
-                                <>
-                                  <button
-                                    onClick={() => abrirTroca(a)}
-                                    className="mr-4 text-sm font-medium text-primary hover:underline"
-                                  >
-                                    Trocar escala
-                                  </button>
-                                  <button
-                                    onClick={() => handleEncerrar(a.id)}
-                                    className="text-sm font-medium text-primary hover:underline"
-                                  >
-                                    Encerrar
-                                  </button>
-                                </>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-8 rounded-lg border border-border bg-surface">
-            <div className="flex flex-wrap items-end gap-4 border-b border-border px-5 py-4">
-              <div>
-                <p className="mb-1.5 text-sm font-medium text-ink">Espelho do mês</p>
-                <p className="text-xs text-muted">
-                  Cada dia mostra a escala que valia naquela data e, lado a lado, o que foi batido no
-                  aparelho e o que entrou por ajuste aprovado. Feriado e afastamento não geram falta
-                  nem atraso.
-                </p>
-              </div>
-              <div className="ml-auto">
-                <label className="mb-1.5 block text-xs font-medium text-ink">Mês</label>
-                <input
-                  type="month"
-                  value={mesEspelho}
-                  onChange={(e) => e.target.value && setMesEspelho(e.target.value)}
-                  className="rounded-sm border border-border bg-canvas px-3 py-1.5 text-sm text-ink outline-none focus:border-primary"
-                />
-              </div>
-            </div>
-
-            {erroEspelho && <p className="px-5 py-3 text-sm text-danger">{erroEspelho}</p>}
-
-            {carregandoEspelho && espelho.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-muted">Carregando...</p>
-            ) : espelho.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-muted">Nenhum dado para o mês.</p>
-            ) : (
-              <div className="overflow-x-auto">
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-border text-muted">
-                    <th className="px-5 py-3 font-medium">Data</th>
-                    <th className="px-5 py-3 font-medium">Situação</th>
-                    <th className="px-5 py-3 font-medium">Previsto</th>
-                    <th className="px-5 py-3 font-medium">Batido</th>
-                    <th className="px-5 py-3 font-medium">Ajustado</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {espelho.map((dia) => (
-                    <tr key={dia.data} className="border-b border-border last:border-0">
-                      <td className="whitespace-nowrap px-5 py-3 text-ink">
-                        {formatarData(dia.data)}
-                        <span className="ml-2 text-xs text-muted">{diaDaSemana(dia.data)}</span>
-                      </td>
-                      <td className="px-5 py-3">
-                        <span
-                          className={`rounded-sm px-2 py-0.5 text-xs font-medium ${ESTILO_SITUACAO_DIA[dia.situacao]}`}
-                        >
-                          {SITUACAO_DIA_LABELS[dia.situacao]}
-                        </span>
-                        {dia.justificativas.map((j) => (
-                          <div
-                            key={j.solicitacaoId}
-                            className="mt-1 text-xs text-muted"
-                            title={j.parecer ?? undefined}
-                          >
-                            {TIPO_OCORRENCIA_LABELS[j.ocorrencia]}{' '}
-                            {j.status === 'APROVADA'
-                              ? `justificado${j.analisadoPorNome ? ` por ${j.analisadoPorNome}` : ''}`
-                              : '— justificativa pendente'}
-                          </div>
-                        ))}
-                      </td>
-                      <td className="px-5 py-3 text-muted">
-                        {dia.turnos.length > 0
-                          ? dia.turnos.map((t, i) => (
-                              <div key={`${t.setorId}-${t.horaInicio}-${i}`}>
-                                {formatarHora(t.horaInicio)} às {formatarHora(t.horaFim)}
-                                {t.atravessaMeiaNoite && (
-                                  <span className="ml-2 rounded-sm bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
-                                    vira o dia
-                                  </span>
-                                )}
-                                <span className="ml-2 text-xs">
-                                  {t.escalaNome} · {t.setorNome}
-                                </span>
-                              </div>
-                            ))
-                          : (dia.descricao ?? '—')}
-                      </td>
-                      <td className="px-5 py-3 text-muted">
-                        {dia.marcacoes.some((m) => !m.ajuste)
-                          ? dia.marcacoes
-                              .filter((m) => !m.ajuste)
-                              .map((m) => <LinhaMarcacao key={m.id} m={m} />)
-                          : '—'}
-                      </td>
-                      <td className="px-5 py-3 text-muted">
-                        {dia.marcacoes.some((m) => m.ajuste)
-                          ? dia.marcacoes
-                              .filter((m) => m.ajuste)
-                              .map((m) => <LinhaMarcacao key={m.id} m={m} />)
-                          : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              </div>
-            )}
-          </div>
-
-          <div className="mt-8 rounded-lg border border-border bg-surface">
-            <div className="flex flex-wrap items-end gap-4 border-b border-border px-5 py-4">
-              <div>
-                <p className="mb-1.5 text-sm font-medium text-ink">Agenda do funcionário</p>
-                <p className="text-xs text-muted">
-                  Turnos previstos no período, em todos os setores (sem feriados e afastamentos).
-                </p>
-              </div>
-              <div className="ml-auto flex flex-wrap items-end gap-3">
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-ink">De</label>
-                  <input
-                    type="date"
-                    value={agendaInicio}
-                    onChange={(e) => setAgendaInicio(e.target.value)}
-                    className="rounded-sm border border-border bg-canvas px-3 py-1.5 text-sm text-ink outline-none focus:border-primary"
-                  />
-                </div>
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-ink">Até</label>
-                  <input
-                    type="date"
-                    value={agendaFim}
-                    onChange={(e) => setAgendaFim(e.target.value)}
-                    className="rounded-sm border border-border bg-canvas px-3 py-1.5 text-sm text-ink outline-none focus:border-primary"
-                  />
-                </div>
+              <div className="flex gap-3">
                 <button
-                  onClick={handleVerAgenda}
-                  disabled={carregandoAgenda}
-                  className="rounded-sm bg-primary px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
+                  type="submit"
+                  disabled={salvando}
+                  className="flex-1 rounded-sm bg-primary py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
                 >
-                  {carregandoAgenda ? 'Buscando...' : 'Ver agenda'}
+                  {salvando ? 'Salvando...' : 'Alocar'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setModalNovaAlocacaoAberto(false)}
+                  disabled={salvando}
+                  className="rounded-sm px-4 py-2 text-sm font-medium text-muted hover:text-ink"
+                >
+                  Cancelar
                 </button>
               </div>
-            </div>
+            </form>
+          </Modal>
 
-            {erroAgenda && (
-              <p className="px-5 py-3 text-sm text-danger">{erroAgenda}</p>
-            )}
-
-            {agenda.length === 0 ? (
-              <p className="px-5 py-8 text-center text-sm text-muted">
-                Nenhum turno no período — clique em "Ver agenda".
+          <Modal
+            titulo={trocando ? `Trocar escala — ${trocando.escala.nome} (${trocando.setor.nome})` : 'Trocar escala'}
+            aberto={!!trocando}
+            onFechar={() => setTrocando(null)}
+            impedirFechar={salvandoTroca}
+          >
+            <form onSubmit={handleTrocar}>
+              <p className="mb-4 text-xs text-muted">
+                A alocação atual termina no dia anterior à troca e a nova começa na data
+                escolhida. Nada é apagado: o histórico e o espelho dos dias que já passaram
+                continuam com a escala antiga.
               </p>
-            ) : (
-              <table className="w-full text-left text-sm">
-                <thead>
-                  <tr className="border-b border-border text-muted">
-                    <th className="px-5 py-3 font-medium">Data</th>
-                    <th className="px-5 py-3 font-medium">Setor</th>
-                    <th className="px-5 py-3 font-medium">Escala</th>
-                    <th className="px-5 py-3 font-medium">Horário</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {agenda.map((t, i) => (
-                    <tr key={`${t.data}-${t.setorId}-${t.horaInicio}-${i}`} className="border-b border-border last:border-0">
-                      <td className="px-5 py-3 text-ink">{formatarData(t.data)}</td>
-                      <td className="px-5 py-3 text-ink">{t.setorNome}</td>
-                      <td className="px-5 py-3 text-muted">{t.escalaNome}</td>
-                      <td className="px-5 py-3 text-muted">
-                        {formatarHora(t.horaInicio)} às {formatarHora(t.horaFim)}
-                        {t.atravessaMeiaNoite && (
-                          <span className="ml-2 rounded-sm bg-accent/10 px-2 py-0.5 text-xs font-medium text-accent">
-                            vira o dia
-                          </span>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+
+              <div className="mb-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-ink">Nova escala</label>
+                  <select
+                    value={trocaEscalaId}
+                    onChange={(e) => setTrocaEscalaId(e.target.value)}
+                    required
+                    className={campo}
+                  >
+                    <option value="" disabled>Selecione</option>
+                    {escalas.map((e) => (
+                      <option key={e.id} value={e.id}>{e.nome}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-ink">Setor</label>
+                  <select
+                    value={trocaSetorId}
+                    onChange={(e) => setTrocaSetorId(e.target.value)}
+                    required
+                    className={campo}
+                  >
+                    {setores.map((s) => (
+                      <option key={s.id} value={s.id}>{s.nome}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-ink">A partir de</label>
+                  <input
+                    type="date"
+                    value={trocaData}
+                    min={hojeISO()}
+                    onChange={(e) => setTrocaData(e.target.value)}
+                    required
+                    className={campo}
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-1.5 block text-sm font-medium text-ink">Até</label>
+                  <input
+                    type="date"
+                    value={trocaDataFim}
+                    min={trocaData || undefined}
+                    onChange={(e) => setTrocaDataFim(e.target.value)}
+                    required
+                    className={campo}
+                  />
+                </div>
+              </div>
+
+              {trocaErro && (
+                <p className="mb-4 rounded-sm bg-danger/10 px-3 py-2 text-sm text-danger">{trocaErro}</p>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={salvandoTroca}
+                  className="rounded-sm bg-primary px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-dark disabled:opacity-60"
+                >
+                  {salvandoTroca ? 'Trocando...' : 'Trocar escala'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTrocando(null)}
+                  disabled={salvandoTroca}
+                  className="rounded-sm px-4 py-2 text-sm font-medium text-muted hover:text-ink"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </form>
+          </Modal>
         </>
       )}
     </div>
