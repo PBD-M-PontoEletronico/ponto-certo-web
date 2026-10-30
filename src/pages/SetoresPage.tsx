@@ -5,7 +5,7 @@ import * as empresasApi from '../api/empresas';
 import * as alocacoesApi from '../api/alocacoes';
 import { extrairErro } from '../api/client';
 import { useAuth } from '../context/AuthContext';
-import { ComboboxBusca } from '../components/Comboboxbusca';
+import { ComboboxBusca } from '../components/ComboboxBusca';
 import {
     POLITICA_FORA_PERIMETRO_LABELS,
     type Alocacao,
