@@ -1,0 +1,114 @@
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import { ProtectedRoute } from './routes/ProtectedRoute';
+import { Layout } from './components/Layout';
+import { LoginPage } from './pages/LoginPage';
+import { DashboardPage } from './pages/DashboardPage';
+import { EmpresasPage } from './pages/EmpresasPage';
+import { UsuariosPage } from './pages/UsuariosPage';
+import { NovoUsuarioPage } from './pages/NovoUsuarioPage';
+import { SetoresPage } from './pages/SetoresPage';
+import { AlocacoesPage } from './pages/AlocacoesPage';
+import { EscalasPage } from './pages/EscalasPage';
+import { FeriadosPage } from './pages/FeriadosPage';
+import { AfastamentosPage } from './pages/AfastamentosPage';
+import { NovoSetorPage } from './pages/NovoSetorPage';
+import { NotFoundPage } from './pages/NotFoundPage';
+import { DispositivosPage } from './pages/DispositivoPage';
+import { MarcacoesPage } from './pages/MarcacoesPage';
+import { SolicitacoesPage } from './pages/SolicitacoesPage';
+
+export function App() {
+    return (
+        <ThemeProvider>
+            <BrowserRouter>
+                <AuthProvider>
+                    <Routes>
+                        <Route path="/login" element={<LoginPage />} />
+
+                        <Route element={<ProtectedRoute />}>
+                            <Route element={<Layout />}>
+                                <Route path="/" element={<DashboardPage />} />
+
+                                <Route element={<ProtectedRoute perfisPermitidos={['SUPERADMIN']} />}>
+                                    <Route path="/empresas" element={<EmpresasPage />} />
+                                </Route>
+
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                    <Route path="/usuarios" element={<UsuariosPage />} />
+                                    <Route path="/usuarios/novo" element={<NovoUsuarioPage />} />
+                                </Route>
+
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                    <Route path="/setores" element={<SetoresPage />} />
+                                    <Route path="/setores/novo" element={<NovoSetorPage />} />
+                                </Route>
+
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                    <Route path="/alocacoes" element={<AlocacoesPage />} />
+                                </Route>
+
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                    <Route path="/escalas" element={<EscalasPage />} />
+                                </Route>
+
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                    <Route path="/feriados" element={<FeriadosPage />} />
+                                    <Route path="/afastamentos" element={<AfastamentosPage />} />
+                                </Route>
+
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                     <Route path="/dispositivos" element={<DispositivosPage />} />
+                                </Route>
+
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN']} />
+                                    }
+                                >
+                                    <Route path="/marcacoes" element={<MarcacoesPage />} />
+                                </Route>
+
+                                {/* W10 — gestor também entra: ele analisa os pedidos */}
+                                <Route
+                                    element={
+                                        <ProtectedRoute perfisPermitidos={['SUPERADMIN', 'RH_ADMIN', 'GESTOR']} />
+                                    }
+                                >
+                                    <Route path="/solicitacoes" element={<SolicitacoesPage />} />
+                                </Route>
+                            </Route>
+                        </Route>
+
+                        <Route path="*" element={<NotFoundPage />} />
+                    </Routes>
+                </AuthProvider>
+            </BrowserRouter>
+        </ThemeProvider>
+    );
+}
