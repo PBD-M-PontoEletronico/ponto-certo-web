@@ -229,10 +229,15 @@ export interface EspelhoJustificativa {
 export interface EspelhoDia {
   data: string;
   situacao: SituacaoDia;
-  descricao: string | null; // nome do feriado ou tipo do afastamento
+  descricao: string | null;
   turnos: EspelhoTurno[];
   marcacoes: EspelhoMarcacao[];
   justificativas: EspelhoJustificativa[];
+  minutosPrevistos: number;
+  minutosTrabalhados: number | null;
+  minutosAtraso: number | null;
+  saldoDoDiaMinutos: number | null;
+  saldoAcumuladoMinutos: number;
 }
 
 export interface UsuarioFiltro {
@@ -471,3 +476,26 @@ export const STATUS_SOLICITACAO_LABELS: Record<StatusSolicitacao, string> = {
   APROVADA: 'Aprovado',
   RECUSADA: 'Recusado',
 };
+
+export type AcaoFechamento = 'FECHADO' | 'REABERTO';
+
+export const ACAO_FECHAMENTO_LABELS: Record<AcaoFechamento, string> = {
+  FECHADO: 'Fechado',
+  REABERTO: 'Reaberto',
+};
+
+export interface FechamentoLog {
+  ano: number;
+  mes: number;
+  acao: AcaoFechamento;
+  empresaNome: string;
+  usuarioNome: string;
+  quando: string;
+}
+
+export interface FechamentoLogFiltro {
+  empresaId?: string;
+  ano?: number;
+  mes?: number;
+  acao?: AcaoFechamento;
+}

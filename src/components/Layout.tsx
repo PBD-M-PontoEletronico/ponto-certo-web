@@ -18,6 +18,7 @@ import {
     IconeDispositivos,
     IconeMarcacoes,
     IconePedidos,
+    IconeFechamentos,
 } from './NavIcons';
 
 const linkBase =
@@ -36,15 +37,16 @@ interface ItemNav {
 const itensNav: ItemNav[] = [
     { to: '/', label: 'Início', icone: IconeInicio, fim: true },
     { to: '/empresas', label: 'Empresas', icone: IconeEmpresas, perfis: ['SUPERADMIN'] },
-    { to: '/usuarios', label: 'Usuários', icone: IconeUsuarios, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
     { to: '/setores', label: 'Setores', icone: IconeSetores, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
-    { to: '/alocacoes', label: 'Alocações', icone: IconeAlocacoes, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
-    { to: '/escalas', label: 'Escalas', icone: IconeEscalas, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
+     { to: '/escalas', label: 'Escalas', icone: IconeEscalas, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
+    { to: '/usuarios', label: 'Usuários', icone: IconeUsuarios, perfis: ['SUPERADMIN', 'RH_ADMIN'] },    
+    { to: '/alocacoes', label: 'Alocações', icone: IconeAlocacoes, perfis: ['SUPERADMIN', 'RH_ADMIN'] }, 
     { to: '/feriados', label: 'Feriados', icone: IconeFeriados, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
     { to: '/afastamentos', label: 'Afastamentos', icone: IconeAfastamentos, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
     { to: '/dispositivos', label: 'Dispositivos', icone: IconeDispositivos, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
     { to: '/marcacoes', label: 'Marcações', icone: IconeMarcacoes, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
     { to: '/solicitacoes', label: 'Pedidos', icone: IconePedidos, perfis: ['SUPERADMIN', 'RH_ADMIN', 'GESTOR'] },
+    { to: '/fechamentos', label: 'Fechamentos', icone: IconeFechamentos, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
 ];
 
 export function Layout() {

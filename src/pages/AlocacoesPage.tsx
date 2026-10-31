@@ -57,6 +57,16 @@ function horaDoInstante(instante: string): string {
   return new Date(instante).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 }
 
+// Minutos -> "8h 00" (com sinal quando negativo); null = dia em andamento.
+function formatarMinutos(minutos: number | null): string {
+  if (minutos === null) return '—';
+  const sinal = minutos < 0 ? '-' : '';
+  const abs = Math.abs(minutos);
+  const horas = Math.floor(abs / 60);
+  const resto = abs % 60;
+  return `${sinal}${horas}h ${resto.toString().padStart(2, '0')}`;
+}
+
 // Uma linha de marcação no espelho (coluna "Batido" ou "Ajustado")
 function LinhaMarcacao({ m }: { m: EspelhoMarcacao }) {
   return (
@@ -241,6 +251,22 @@ export function AlocacoesPage() {
     setSucesso(null);
     try {
       await alocacoesApi.encerrarAlocacao(alocacaoId, hoje);
+      const atualizado = await alocacoesApi.historicoDoUsuario(usuarioId);
+      setHistorico(atualizado);
+    } catch (err) {
+      setErro(extrairErro(err).message);
+    }
+  }
+
+  async function handleExcluir(alocacao: Alocacao) {
+    if (!confirm(
+      `Excluir de vez a alocação "${alocacao.escala.nome}" (${alocacao.setor.nome}, ` +
+      `${formatarData(alocacao.dataInicio)} a ${formatarData(alocacao.dataFim)})? Essa ação não pode ser desfeita.`
+    )) return;
+
+    setSucesso(null);
+    try {
+      await alocacoesApi.excluirAlocacao(alocacao.id);
       const atualizado = await alocacoesApi.historicoDoUsuario(usuarioId);
       setHistorico(atualizado);
     } catch (err) {
@@ -438,12 +464,20 @@ export function AlocacoesPage() {
                                 </button>
                                 <button
                                   onClick={() => handleEncerrar(a.id)}
-                                  className="text-sm font-medium text-primary hover:underline"
+                                  className="mr-4 text-sm font-medium text-primary hover:underline"
                                 >
                                   Encerrar
                                 </button>
                               </>
                             )}
+                           {ehSuperAdmin && (
+                                    <button
+                                    onClick={() => handleExcluir(a)}
+                                    className="text-sm font-medium text-danger hover:underline"
+                                    >
+                                    Excluir
+                                    </button>
+                                    )}
                           </td>
                         </tr>
                       );
@@ -492,6 +526,10 @@ export function AlocacoesPage() {
                       <th className="px-5 py-3 font-medium">Previsto</th>
                       <th className="px-5 py-3 font-medium">Batido</th>
                       <th className="px-5 py-3 font-medium">Ajustado</th>
+                      <th className="px-5 py-3 font-medium">Trabalhado</th>
+                      <th className="px-5 py-3 font-medium">Atraso</th>
+                      <th className="px-5 py-3 font-medium">Saldo do dia</th>
+                      <th className="px-5 py-3 font-medium">Saldo acumulado</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -550,6 +588,36 @@ export function AlocacoesPage() {
                                 .filter((m) => m.ajuste)
                                 .map((m) => <LinhaMarcacao key={m.id} m={m} />)
                             : '—'}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-3 text-ink">
+                          {formatarMinutos(dia.minutosTrabalhados)}
+                        </td>
+                        <td className="whitespace-nowrap px-5 py-3 text-muted">
+                          {dia.minutosAtraso === null
+                            ? '—'
+                            : dia.minutosAtraso === 0
+                              ? 'no horário'
+                              : formatarMinutos(dia.minutosAtraso)}
+                        </td>
+                        <td
+                          className={`whitespace-nowrap px-5 py-3 font-medium ${
+                            dia.saldoDoDiaMinutos === null
+                              ? 'text-muted'
+                              : dia.saldoDoDiaMinutos < 0
+                                ? 'text-danger'
+                                : dia.saldoDoDiaMinutos > 0
+                                  ? 'text-success'
+                                  : 'text-muted'
+                          }`}
+                        >
+                          {formatarMinutos(dia.saldoDoDiaMinutos)}
+                        </td>
+                        <td
+                          className={`whitespace-nowrap px-5 py-3 font-medium ${
+                            dia.saldoAcumuladoMinutos < 0 ? 'text-danger' : 'text-success'
+                          }`}
+                        >
+                          {formatarMinutos(dia.saldoAcumuladoMinutos)}
                         </td>
                       </tr>
                     ))}
