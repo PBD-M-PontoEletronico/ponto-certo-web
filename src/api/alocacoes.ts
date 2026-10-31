@@ -20,6 +20,10 @@ export async function encerrarAlocacao(id: string, dataFim: string): Promise<Alo
   return data;
 }
 
+export async function excluirAlocacao(id: string): Promise<void> {
+  await apiClient.delete(`/alocacoes/${id}`);
+}
+
 // Encerra a alocação atual no dia anterior e abre a nova na data da troca
 export async function trocarEscala(
   id: string,
