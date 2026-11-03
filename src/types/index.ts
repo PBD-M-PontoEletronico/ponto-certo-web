@@ -499,3 +499,59 @@ export interface FechamentoLogFiltro {
   mes?: number;
   acao?: AcaoFechamento;
 }
+
+// ---------------------------------------------------------------------------
+// W12 — Relatório de previsto contra realizado (espelha os Relatorio*DTO.java)
+// ---------------------------------------------------------------------------
+
+export type AgrupamentoRelatorio = 'SEMANA' | 'MES';
+
+export interface RelatorioPeriodo {
+  inicio: string;
+  fim: string;
+  rotulo: string;
+}
+
+// Tudo em minutos; a tela formata em horas.
+export interface RelatorioIndicadores {
+  minutosPrevistos: number;
+  minutosRealizados: number;
+  diferencaMinutos: number;
+  minutosExtras: number;
+  atrasosJustificados: number;
+  atrasosNaoJustificados: number;
+  minutosAtraso: number;
+  faltasJustificadas: number;
+  faltasNaoJustificadas: number;
+  diasAfastamento: number;
+  afastamentos: string[];
+  diasEmAberto: number;
+}
+
+export interface RelatorioLinha {
+  id: string | null; // null = "Sem setor" / total geral
+  nome: string;
+  detalhe: string | null; // matrícula, para funcionário
+  total: RelatorioIndicadores;
+  porPeriodo: RelatorioIndicadores[]; // mesma ordem de "periodos"
+}
+
+export interface RelatorioPrevistoRealizado {
+  inicio: string;
+  fim: string;
+  calculadoAte: string;
+  agrupamento: AgrupamentoRelatorio;
+  periodos: RelatorioPeriodo[];
+  funcionarios: RelatorioLinha[];
+  setores: RelatorioLinha[];
+  totalGeral: RelatorioLinha;
+}
+
+export interface RelatorioFiltro {
+  inicio: string;
+  fim: string;
+  agrupamento: AgrupamentoRelatorio;
+  setorId?: string;
+  usuarioId?: string;
+  empresaId?: string;
+}
