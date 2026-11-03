@@ -19,6 +19,7 @@ import { DispositivosPage } from './pages/DispositivoPage';
 import { MarcacoesPage } from './pages/MarcacoesPage';
 import { SolicitacoesPage } from './pages/SolicitacoesPage';
 import { FechamentosPage } from './pages/FechamentosPage';
+import { RelatoriosPage } from './pages/RelatoriosPage';
 
 export function App() {
     return (
@@ -94,6 +95,8 @@ export function App() {
                                 >
                                     <Route path="/marcacoes" element={<MarcacoesPage />} />
                                     <Route path="/fechamentos" element={<FechamentosPage />} />
+                                    {/* W12 — previsto contra realizado */}
+                                    <Route path="/relatorios" element={<RelatoriosPage />} />
                                 </Route>
 
                                 {/* W10 — gestor também entra: ele analisa os pedidos */}

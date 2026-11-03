@@ -19,6 +19,7 @@ import {
     IconeMarcacoes,
     IconePedidos,
     IconeFechamentos,
+    IconeRelatorios,
 } from './NavIcons';
 
 const linkBase =
@@ -47,6 +48,7 @@ const itensNav: ItemNav[] = [
     { to: '/marcacoes', label: 'Marcações', icone: IconeMarcacoes, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
     { to: '/solicitacoes', label: 'Pedidos', icone: IconePedidos, perfis: ['SUPERADMIN', 'RH_ADMIN', 'GESTOR'] },
     { to: '/fechamentos', label: 'Fechamentos', icone: IconeFechamentos, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
+    { to: '/relatorios', label: 'Relatórios', icone: IconeRelatorios, perfis: ['SUPERADMIN', 'RH_ADMIN'] },
 ];
 
 export function Layout() {
